@@ -1,0 +1,96 @@
+window.blogsData = window.blogsData || [];
+(function() {
+    let blog = {
+        "id": "vocarevo",
+        "name": "vocarevo",
+        "blogUrl": "https://blog.naver.com/vocarevo",
+        "categoryNo": "10",
+        "parentCategoryNo": "",
+        "posts": []
+    };
+    blog.posts.push({"id": "post_220732901914", "title": "save", "link": "https://blog.naver.com/vocarevo/220732901914"});
+    blog.posts.push({"id": "post_220700142232", "title": "영어 질문 게시판", "link": "https://blog.naver.com/vocarevo/220700142232"});
+    blog.posts.push({"id": "post_220701804591", "title": "영작앱(단어만 바꿀 줄 알면 끝나는 영작문)", "link": "https://blog.naver.com/vocarevo/220701804591"});
+    blog.posts.push({"id": "post_220729152442", "title": "hover & dangle", "link": "https://blog.naver.com/vocarevo/220729152442"});
+    blog.posts.push({"id": "post_220543863844", "title": "소매, 바지통, 반바지 영어로?", "link": "https://blog.naver.com/vocarevo/220543863844"});
+    blog.posts.push({"id": "post_220538464592", "title": "거꾸로 upside down, 뒤집어 inside out", "link": "https://blog.naver.com/vocarevo/220538464592"});
+    blog.posts.push({"id": "post_220535305935", "title": "turn down 거절하다", "link": "https://blog.naver.com/vocarevo/220535305935"});
+    blog.posts.push({"id": "post_220520123417", "title": "아는 단어 활용하기", "link": "https://blog.naver.com/vocarevo/220520123417"});
+    blog.posts.push({"id": "post_220517698612", "title": "주방 용품 영어 단어들", "link": "https://blog.naver.com/vocarevo/220517698612"});
+    blog.posts.push({"id": "post_220515504821", "title": "우편물(소포, 배송 수단 등)에 관한 영어", "link": "https://blog.naver.com/vocarevo/220515504821"});
+    blog.posts.push({"id": "post_220506770153", "title": "색과 관련된 표현들(color, paint, dye)", "link": "https://blog.naver.com/vocarevo/220506770153"});
+    blog.posts.push({"id": "post_220504027268", "title": "나는 영어로 색깔(color)을 몇 개나 알고 있을까?", "link": "https://blog.naver.com/vocarevo/220504027268"});
+    blog.posts.push({"id": "post_220501348601", "title": "열등감 영어로?", "link": "https://blog.naver.com/vocarevo/220501348601"});
+    blog.posts.push({"id": "post_220498500938", "title": "한국인들은 다 아는 입체 도형 영단어", "link": "https://blog.naver.com/vocarevo/220498500938"});
+    blog.posts.push({"id": "post_220495364893", "title": "한국인들이라면 다 아는 도형 관련 영단어1", "link": "https://blog.naver.com/vocarevo/220495364893"});
+    blog.posts.push({"id": "post_220493226882", "title": "블루문과 숙어 once in a blue moon", "link": "https://blog.naver.com/vocarevo/220493226882"});
+    blog.posts.push({"id": "post_220491217912", "title": "다의어 spring", "link": "https://blog.naver.com/vocarevo/220491217912"});
+    blog.posts.push({"id": "post_220487949704", "title": "다의어 bow", "link": "https://blog.naver.com/vocarevo/220487949704"});
+    blog.posts.push({"id": "post_220485439978", "title": "knock down, knock out (격투기/권투에서 배우는 숙어 2개)", "link": "https://blog.naver.com/vocarevo/220485439978"});
+    blog.posts.push({"id": "post_220473416568", "title": "원룸 영어로", "link": "https://blog.naver.com/vocarevo/220473416568"});
+    blog.posts.push({"id": "post_220458827973", "title": "우산 펴다, 접다 영어로", "link": "https://blog.naver.com/vocarevo/220458827973"});
+    blog.posts.push({"id": "post_220455839796", "title": "다의어 tip", "link": "https://blog.naver.com/vocarevo/220455839796"});
+    blog.posts.push({"id": "post_220449844204", "title": "가로, 세로 영어로", "link": "https://blog.naver.com/vocarevo/220449844204"});
+    blog.posts.push({"id": "post_220444248499", "title": "'공부 잘하다' 영어로? study well??", "link": "https://blog.naver.com/vocarevo/220444248499"});
+    blog.posts.push({"id": "post_220441011985", "title": "다의어 as 한 방에 보내는 암기법", "link": "https://blog.naver.com/vocarevo/220441011985"});
+    blog.posts.push({"id": "post_220310797812", "title": "원급 비교 (as ~ as)", "link": "https://blog.naver.com/vocarevo/220310797812"});
+    blog.posts.push({"id": "post_220429382332", "title": "발이 아파요. My feet are sick???", "link": "https://blog.naver.com/vocarevo/220429382332"});
+    blog.posts.push({"id": "post_220425889674", "title": "약속을 영어로 promise? appointment?", "link": "https://blog.naver.com/vocarevo/220425889674"});
+    blog.posts.push({"id": "post_220423217688", "title": "아파트? house? (집, 아파트와 관련된 영어 표현들)", "link": "https://blog.naver.com/vocarevo/220423217688"});
+    blog.posts.push({"id": "post_220420104638", "title": "등록금", "link": "https://blog.naver.com/vocarevo/220420104638"});
+    blog.posts.push({"id": "post_220402612625", "title": "leap, reap", "link": "https://blog.naver.com/vocarevo/220402612625"});
+    blog.posts.push({"id": "post_220396149930", "title": "핏줄/혈관에 관한 단어 3개(vessel, vein, artery)", "link": "https://blog.naver.com/vocarevo/220396149930"});
+    blog.posts.push({"id": "post_220387260378", "title": "MERS에서 배우는 영어 표현 respiratory syndrome", "link": "https://blog.naver.com/vocarevo/220387260378"});
+    blog.posts.push({"id": "post_220383669590", "title": "nuts? crazy! (nuts 뜻의 유래)", "link": "https://blog.naver.com/vocarevo/220383669590"});
+    blog.posts.push({"id": "post_220380991589", "title": "spouse 배우자, sibling 형,제,자,매", "link": "https://blog.naver.com/vocarevo/220380991589"});
+    blog.posts.push({"id": "post_220377693504", "title": "(돈이) 들다 cost, (시간이) 걸리다 take", "link": "https://blog.naver.com/vocarevo/220377693504"});
+    blog.posts.push({"id": "post_220371714048", "title": "다의어 work (일하다, 작동하다, 효과가 있다)", "link": "https://blog.naver.com/vocarevo/220371714048"});
+    blog.posts.push({"id": "post_220368838306", "title": "찾다", "link": "https://blog.naver.com/vocarevo/220368838306"});
+    blog.posts.push({"id": "post_220366260843", "title": "recently vs lately", "link": "https://blog.naver.com/vocarevo/220366260843"});
+    blog.posts.push({"id": "post_220363132206", "title": "vivid 생생한/선명한", "link": "https://blog.naver.com/vocarevo/220363132206"});
+    blog.posts.push({"id": "post_220358196352", "title": "가만히 잡고 있다/들고 있다 hold", "link": "https://blog.naver.com/vocarevo/220358196352"});
+    blog.posts.push({"id": "post_220352432848", "title": "go to school, go to the school", "link": "https://blog.naver.com/vocarevo/220352432848"});
+    blog.posts.push({"id": "post_220334421185", "title": "rational 합리적인, 이성적인", "link": "https://blog.naver.com/vocarevo/220334421185"});
+    blog.posts.push({"id": "post_220328199493", "title": "답답해요! I'm frustrated.", "link": "https://blog.naver.com/vocarevo/220328199493"});
+    blog.posts.push({"id": "post_220317272624", "title": "fool (바보를 뜻하는 영어 단어들)", "link": "https://blog.naver.com/vocarevo/220317272624"});
+    blog.posts.push({"id": "post_220295721563", "title": "엘리베이터와 에스컬레이터로 배우는 영어 몇 마디", "link": "https://blog.naver.com/vocarevo/220295721563"});
+    blog.posts.push({"id": "post_220284447005", "title": "lie, lay", "link": "https://blog.naver.com/vocarevo/220284447005"});
+    blog.posts.push({"id": "post_220278307359", "title": "다의어 board 그리고 스펠이 비슷한 broad", "link": "https://blog.naver.com/vocarevo/220278307359"});
+    blog.posts.push({"id": "post_220280685514", "title": "aboard, abroad", "link": "https://blog.naver.com/vocarevo/220280685514"});
+    blog.posts.push({"id": "post_220276278619", "title": "nevertheless, nonetheless (그럼에도 불구하고)", "link": "https://blog.naver.com/vocarevo/220276278619"});
+    blog.posts.push({"id": "post_220240080735", "title": "영어 단어 영어로 외우기", "link": "https://blog.naver.com/vocarevo/220240080735"});
+    blog.posts.push({"id": "post_220233621073", "title": "stare(뚫어지게 쳐다 보다), glare(째려 보다, 노려 보다)", "link": "https://blog.naver.com/vocarevo/220233621073"});
+    blog.posts.push({"id": "post_220230335023", "title": "보다 see, look at, watch", "link": "https://blog.naver.com/vocarevo/220230335023"});
+    blog.posts.push({"id": "post_220224802923", "title": "저 축구 선수 아닌데요!? Yes, you are a soccer player!", "link": "https://blog.naver.com/vocarevo/220224802923"});
+    blog.posts.push({"id": "post_220227591116", "title": "운동을 잘하는 athletic", "link": "https://blog.naver.com/vocarevo/220227591116"});
+    blog.posts.push({"id": "post_220222594386", "title": "살 빼다 lose my weight?? 다이어트 diet??", "link": "https://blog.naver.com/vocarevo/220222594386"});
+    blog.posts.push({"id": "post_220211653206", "title": "ear, year 발음 차이", "link": "https://blog.naver.com/vocarevo/220211653206"});
+    blog.posts.push({"id": "post_220209042455", "title": "adapt, adopt 구별 (using 아답터와 어얼리 어답터)", "link": "https://blog.naver.com/vocarevo/220209042455"});
+    blog.posts.push({"id": "post_220206022606", "title": "뽀록? 후루꾸? 영어단어 fluke에서 유래한 일본식 발음", "link": "https://blog.naver.com/vocarevo/220206022606"});
+    blog.posts.push({"id": "post_220194686023", "title": "​부정어 hardly, scarcely (거의 ~ 않는) 암기와 활용", "link": "https://blog.naver.com/vocarevo/220194686023"});
+    blog.posts.push({"id": "post_220192005997", "title": "부정어 rarely, seldom (드물게, 거의~않는) 암기와 활용", "link": "https://blog.naver.com/vocarevo/220192005997"});
+    blog.posts.push({"id": "post_220186010714", "title": "unless 암기법과 활용", "link": "https://blog.naver.com/vocarevo/220186010714"});
+    blog.posts.push({"id": "post_220153447794", "title": "만나다 meet, see, 만나서 놀다 hang out", "link": "https://blog.naver.com/vocarevo/220153447794"});
+    blog.posts.push({"id": "post_220120093039", "title": "솔직히 말하면... frankly speaking??", "link": "https://blog.naver.com/vocarevo/220120093039"});
+    blog.posts.push({"id": "post_220116752859", "title": "다의어 전치사 for 뜻, 문장 속에서 쉽게 외우기1", "link": "https://blog.naver.com/vocarevo/220116752859"});
+    blog.posts.push({"id": "post_220110159424", "title": "동사 leave. leave for 뜻과 활용", "link": "https://blog.naver.com/vocarevo/220110159424"});
+    blog.posts.push({"id": "post_220114707658", "title": "home의 뜻", "link": "https://blog.naver.com/vocarevo/220114707658"});
+    blog.posts.push({"id": "post_220104996238", "title": "wear, put on, take off (입다, 신다, 쓰다, 끼다, 등 착용하다, 벗다)", "link": "https://blog.naver.com/vocarevo/220104996238"});
+    blog.posts.push({"id": "post_220112721291", "title": "put off (미루다), put out (끄다)", "link": "https://blog.naver.com/vocarevo/220112721291"});
+    blog.posts.push({"id": "post_220108086529", "title": "creep으로 배워 보는 단어들(creep, crawl, creepy, reptile)", "link": "https://blog.naver.com/vocarevo/220108086529"});
+    blog.posts.push({"id": "post_220089637721", "title": "스쿠터(scooter)로 배우는 영어 한 마디", "link": "https://blog.naver.com/vocarevo/220089637721"});
+    blog.posts.push({"id": "post_220084648518", "title": "휴가, 휴일, 연휴, 쉬는 날 영어로?", "link": "https://blog.naver.com/vocarevo/220084648518"});
+    blog.posts.push({"id": "post_220081865215", "title": "계단 올라가다/내려가다 등 계단과 관련된 영어", "link": "https://blog.naver.com/vocarevo/220081865215"});
+    blog.posts.push({"id": "post_220078430390", "title": "many, much 말고 a lot of (= lots of), plenty of를 쓰세요.", "link": "https://blog.naver.com/vocarevo/220078430390"});
+    blog.posts.push({"id": "post_220075882311", "title": "fruit, vegetables, and tomatoes (과일, 채소, 그리고 토마토)", "link": "https://blog.naver.com/vocarevo/220075882311"});
+    blog.posts.push({"id": "post_220070440306", "title": "산, 산맥, 봉우리 (mountain, the mountains, peak)", "link": "https://blog.naver.com/vocarevo/220070440306"});
+    blog.posts.push({"id": "post_220057122826", "title": "물질명사", "link": "https://blog.naver.com/vocarevo/220057122826"});
+    blog.posts.push({"id": "post_220067442170", "title": "glass, glasses 유리, 유리잔, 안경", "link": "https://blog.naver.com/vocarevo/220067442170"});
+    blog.posts.push({"id": "post_220060112341", "title": "헷갈리는 불가산명사", "link": "https://blog.naver.com/vocarevo/220060112341"});
+    blog.posts.push({"id": "post_220049587238", "title": "영어단어 영어로 외우기 #68 drift 표류하다 + barhopping + hangover", "link": "https://blog.naver.com/vocarevo/220049587238"});
+    blog.posts.push({"id": "post_220029942940", "title": "영어단어 영어로 외우기 #67 foster 위탁양육하다 vs adopt 입양하다", "link": "https://blog.naver.com/vocarevo/220029942940"});
+    blog.posts.push({"id": "post_220006777077", "title": "​영어단어 영어로 외우기 #66 mumble 중얼거리다 + mummy 미라", "link": "https://blog.naver.com/vocarevo/220006777077"});
+    blog.posts.push({"id": "post_220004279167", "title": "영어단어 영어로 외우기 #65 fling 내 던지다", "link": "https://blog.naver.com/vocarevo/220004279167"});
+    blog.posts.push({"id": "post_220001787961", "title": "영어단어 영어로 외우기 #64 flutter 퍼덕이다", "link": "https://blog.naver.com/vocarevo/220001787961"});
+    window.blogsData.push(blog);
+})();
