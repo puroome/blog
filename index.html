@@ -184,7 +184,7 @@
                     <span id="reader-position"></span>
                     <button id="next-post" onclick="gotoPost(1)" aria-label="다음 글">›</button>
                 </div>
-                <label id="learn-toggle"><input type="checkbox" id="learn-checkbox" onchange="toggleLearned()"> 학습</label>
+                <label id="learn-toggle"><input type="checkbox" id="learn-checkbox" onchange="toggleLearned()"></label>
             </nav>
         </section>
     </div>
@@ -247,7 +247,7 @@
                 dbData.deleted_posts = data.deleted_posts || {};
                 dbData.content_overrides = data.content_overrides || {};
                 dbData.learned = data.learned || {};
-                setStatus("✅ synced", "#2ecc71");
+                setStatus("synced", "#2ecc71");
             } catch (err) {
                 console.error("Firebase 로드 오류", err);
                 setStatus("❌ 클라우드 연결 실패", "#e74c3c", true);
@@ -294,11 +294,15 @@
             document.getElementById('list-actions').style.display  = isReader ? 'none' : 'flex';
             document.getElementById('reader-actions').style.display= isReader ? 'flex' : 'none';
 
-            // 화면별 상단바 색 (블로그목록=빨강, 글목록=파랑, 본문=노랑) — 모두 80% 투명(=20% 불투명)
+            // 화면별 상단/하단바 색 — 단, 본문 화면에서 '학습 완료'한 글이면 위·아래 메뉴 색 모두 제거
             const topbar = document.getElementById('topbar');
-            topbar.style.background = (view === 'blogs') ? 'rgba(239,68,68,.2)'
-                                    : (view === 'posts') ? 'rgba(59,130,246,.2)'
-                                    : 'rgba(250,204,21,.2)';
+            if (view === 'reader') {
+                const learned = isLearned(currentBlogId, currentContentId);
+                topbar.style.background = learned ? 'var(--card)' : 'rgba(250,204,21,.2)';
+                document.getElementById('reader-nav').style.background = learned ? 'var(--card)' : 'rgba(168,85,247,.2)';
+            } else {
+                topbar.style.background = (view === 'blogs') ? 'rgba(239,68,68,.2)' : 'rgba(59,130,246,.2)';
+            }
 
             // 첫 화면에서만 제목을 가운데 정렬하고 아이콘을 표시 (.home → CSS가 처리)
             topbar.classList.toggle('home', view === 'blogs');
@@ -340,13 +344,10 @@
             if (!blogId || !postId) return;
             if (!dbData.learned[blogId]) dbData.learned[blogId] = {};
             setStatus(checked ? "☁️ 학습 기록 중..." : "☁️ 학습 해제 중...", "#2ecc71");
-            if (checked) {
-                dbData.learned[blogId][postId] = true;
-                await updateFirebase(`learned/${blogId}/${postId}`, true);
-            } else {
-                delete dbData.learned[blogId][postId];
-                await updateFirebase(`learned/${blogId}/${postId}`, null); // null → RTDB에서 삭제
-            }
+            if (checked) dbData.learned[blogId][postId] = true;
+            else delete dbData.learned[blogId][postId];
+            setScreen('reader'); // 체크 즉시 위·아래 메뉴 색 갱신
+            await updateFirebase(`learned/${blogId}/${postId}`, checked ? true : null); // null → RTDB에서 삭제
             setStatus("✅ 동기화 완료", "#2ecc71");
         }
 
