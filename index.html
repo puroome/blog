@@ -31,6 +31,7 @@
 
         /* 상단 바 (화면마다 버튼만 교체) */
         #topbar{
+            position:relative;
             flex:0 0 auto; display:flex; align-items:center; gap:8px;
             padding:12px 14px; background:var(--card);
             border-bottom:1px solid var(--border);
@@ -42,9 +43,21 @@
         }
         #back-btn:hover{background:#f1f2f4;}
         #screen-title{
-            flex:1 1 auto; margin:0; font-size:18px; font-weight:700;
-            white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+            flex:1 1 auto; min-width:0; margin:0; font-size:18px; font-weight:700;
+            display:flex; align-items:center; gap:8px;
         }
+        #title-text{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        #title-icon{ height:1em; width:auto; flex:0 0 auto; display:none; }
+
+        /* 첫 화면: 제목을 메뉴바 정중앙에, 더 굵게, 1.2배(=21.6px) */
+        #topbar.home #screen-title{
+            position:absolute; left:50%; top:50%;
+            transform:translate(-50%,-50%);
+            flex:0 0 auto; max-width:70%; justify-content:center;
+            font-size:21.6px; font-weight:800;
+        }
+        #topbar.home #title-icon{ display:inline-block; }
+        #topbar.home #list-actions{ margin-left:auto; }
         .actions{display:flex; align-items:center; gap:6px; flex:0 0 auto;}
         #reader-actions{display:none;}
         .tb-btn{
@@ -85,8 +98,8 @@
         }
         .row:hover{box-shadow:0 4px 14px rgba(0,0,0,.06); transform:translateY(-1px);}
         .row:active{transform:translateY(0);}
-        .row.blog{background:rgba(59,130,246,.5); border-left:3px solid var(--accent);}
-        .row.post{background:rgba(250,204,21,.5);}
+        .row.blog{background:rgba(59,130,246,.2); border-left:3px solid var(--accent);}
+        .row.post{background:rgba(250,204,21,.2);}
         .row .name{
             flex:1 1 auto; font-weight:600; font-size:16px;
             overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
@@ -115,7 +128,7 @@
         }
         #reader-nav{
             flex:0 0 auto; display:flex; align-items:center; justify-content:center; gap:24px;
-            padding:10px; background:rgba(168,85,247,.5); border-top:1px solid var(--border);
+            padding:10px; background:rgba(168,85,247,.2); border-top:1px solid var(--border);
             padding-bottom:calc(10px + env(safe-area-inset-bottom));
         }
         #reader-nav button{
@@ -131,7 +144,7 @@
     <div id="app">
         <header id="topbar">
             <button id="back-btn" onclick="goBack()" aria-label="뒤로">‹</button>
-            <h1 id="screen-title">English Blog</h1>
+            <h1 id="screen-title"><img id="title-icon" src="icon.png" alt="" onerror="this.style.display='none'"><span id="title-text">English Blog</span></h1>
 
             <div id="list-actions" class="actions">
                 <button id="edit-btn" class="tb-btn" onclick="toggleEditMode()">편집</button>
@@ -268,11 +281,14 @@
             document.getElementById('list-actions').style.display  = isReader ? 'none' : 'flex';
             document.getElementById('reader-actions').style.display= isReader ? 'flex' : 'none';
 
-            // 화면별 상단바 색 (블로그목록=빨강, 글목록=파랑, 본문=노랑) — 모두 50% 투명
+            // 화면별 상단바 색 (블로그목록=빨강, 글목록=파랑, 본문=노랑) — 모두 80% 투명(=20% 불투명)
             const topbar = document.getElementById('topbar');
-            topbar.style.background = (view === 'blogs') ? 'rgba(239,68,68,.5)'
-                                    : (view === 'posts') ? 'rgba(59,130,246,.5)'
-                                    : 'rgba(250,204,21,.5)';
+            topbar.style.background = (view === 'blogs') ? 'rgba(239,68,68,.2)'
+                                    : (view === 'posts') ? 'rgba(59,130,246,.2)'
+                                    : 'rgba(250,204,21,.2)';
+
+            // 첫 화면에서만 제목을 가운데 정렬하고 아이콘을 표시 (.home → CSS가 처리)
+            topbar.classList.toggle('home', view === 'blogs');
         }
 
         // ponytail: id가 시간순(예: 네이버 블로그 logNo — 숫자가 클수록 최신)이라고 가정해 정렬.
@@ -297,7 +313,7 @@
         function renderBlogList() {
             isEditMode = false;
             setScreen('blogs');
-            document.getElementById('screen-title').innerText = 'English Blog';
+            document.getElementById('title-text').innerText = 'English Blog';
             updateEditButtons();
 
             const listEl = document.getElementById('post-list');
@@ -333,7 +349,7 @@
             if (!blog) return;
 
             setScreen('posts');
-            document.getElementById('screen-title').innerText = blog.name;
+            document.getElementById('title-text').innerText = blog.name;
             updateEditButtons();
 
             const listEl = document.getElementById('post-list');
@@ -444,7 +460,7 @@
             currentPostIndex = idx;
 
             setScreen('reader');
-            document.getElementById('screen-title').innerText = post.title;
+            document.getElementById('title-text').innerText = post.title;
             document.getElementById('header-link').href = post.link || '#';
 
             // 본문 편집 UI 초기화
