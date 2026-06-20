@@ -2,118 +2,206 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>나만의 단어장 (Cloud Sync)</title>
     <script src="id/_id_list.js"></script>
     <script src="embed-helpers.js"></script>
     <style>
-        body { font-family: 'Malgun Gothic', sans-serif; margin: 0; padding: 0; display: flex; height: 100vh; background-color: #f4f6f8; overflow: hidden; }
-        .sidebar { width: 35%; background: #ffffff; border-right: 1px solid #ddd; display: flex; flex-direction: column; }
-        .sidebar-header { padding: 20px; border-bottom: 2px solid #3498db; }
-        .btn { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .btn-edit { background-color: #f39c12; color: white; }
-        .btn-back { background-color: #95a5a6; color: white; margin-right: 10px; }
-        .btn-delete { background-color: #e74c3c; color: white; display: none; margin-left: 10px; }
-        .sync-status { font-size: 12px; color: #2ecc71; margin-top: 10px; font-weight: bold; }
-        .list-container { overflow-y: auto; padding: 20px; flex-grow: 1; }
-        .post-item, .blog-item { display: flex; align-items: center; padding: 12px 15px; margin-bottom: 8px; background: #eaf2f8; border-radius: 6px; }
-        .blog-item { background: #fdf2e3; border-left: 4px solid #f39c12; }
-        .post-title { flex-grow: 1; cursor: pointer; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .blog-name { flex-grow: 1; cursor: pointer; font-weight: bold; font-size: 16px; }
-        .blog-count { font-size: 12px; color: #7f8c8d; margin-left: 8px; white-space: nowrap; }
-        .delete-checkbox { display: none; margin-right: 10px; }
-        .main-content { width: 65%; display: flex; flex-direction: column; background: white; }
-        .header-bar { padding: 15px; background: #ecf0f1; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; }
-        #content-frame { flex-grow: 1; width: 100%; border: none; }
-        .post-title[contenteditable="true"], .blog-name[contenteditable="true"] { cursor: text; white-space: normal; background: #fffbe6; outline: 2px dashed #f39c12; border-radius: 4px; padding: 2px 4px; }
-        #content-edit { flex-grow: 1; width: 100%; padding: 20px; overflow-y: auto; box-sizing: border-box; line-height: 1.6; }
-        #content-edit[contenteditable="true"] { background: #fffbe6; outline: 2px dashed #f39c12; outline-offset: -2px; }
-        .btn-content-edit { background-color: #16a085; color: white; }
-        .btn-content-save { background-color: #2980b9; color: white; }
-        .btn-content-cancel { background-color: #7f8c8d; color: white; }
-        .empty-state { padding: 40px 20px; text-align: center; color: #95a5a6; }
+        :root{
+            --accent:#3b82f6; --accent-press:#2563eb;
+            --text:#1f2933; --muted:#6b7280; --border:#e8eaed;
+            --card:#ffffff; --bg:#f4f5f7; --danger:#ef4444; --edit:#fffbe6;
+        }
+        *{box-sizing:border-box;}
+        html,body{height:100%;}
+        body{
+            margin:0; background:#e7e9ee; color:var(--text);
+            font-family:'Malgun Gothic',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+            -webkit-font-smoothing:antialiased; overscroll-behavior-y:none;
+        }
+
+        /* 폰/컴 동일: 가운데 정렬된 단일 컬럼 */
+        #app{
+            max-width:720px; margin:0 auto;
+            height:100vh; height:100dvh;
+            display:flex; flex-direction:column;
+            background:var(--bg); overflow:hidden;
+            box-shadow:0 0 50px rgba(0,0,0,.07);
+        }
+
+        /* 상단 바 (화면마다 버튼만 교체) */
+        #topbar{
+            flex:0 0 auto; display:flex; align-items:center; gap:8px;
+            padding:12px 14px; background:var(--card);
+            border-bottom:1px solid var(--border);
+        }
+        #back-btn{
+            flex:0 0 auto; width:34px; height:34px; border:none; cursor:pointer;
+            background:transparent; color:var(--text); font-size:26px; line-height:1;
+            border-radius:9px; display:none; align-items:center; justify-content:center;
+        }
+        #back-btn:hover{background:#f1f2f4;}
+        #screen-title{
+            flex:1 1 auto; margin:0; font-size:18px; font-weight:700;
+            white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+        }
+        .actions{display:flex; align-items:center; gap:6px; flex:0 0 auto;}
+        #reader-actions{display:none;}
+        .tb-btn{
+            border:none; cursor:pointer; white-space:nowrap; text-decoration:none;
+            background:#f1f2f4; color:var(--text); font-size:14px; font-weight:600;
+            padding:7px 12px; border-radius:9px;
+        }
+        .tb-btn:hover{background:#e6e8eb;}
+        .tb-btn.primary{background:var(--accent); color:#fff;}
+        .tb-btn.primary:hover{background:var(--accent-press);}
+        .tb-btn.danger{background:#fde8e8; color:var(--danger);}
+        .tb-btn.link{background:transparent; color:var(--accent); padding:7px 4px;}
+
+        /* 동기화 상태: 두 화면 모두에서 항상 보이도록 상단 바 바로 아래 슬림 라인 */
+        #sync-status{
+            flex:0 0 auto; padding:6px 16px; font-size:12px; font-weight:600;
+            color:#2ecc71; background:var(--card); border-bottom:1px solid var(--border);
+        }
+
+        /* 목록 화면 (블로그/글 공용) */
+        #list-screen{
+            flex:1 1 auto; min-height:0; overflow-y:auto;
+            padding:14px; display:flex; flex-direction:column; gap:10px;
+        }
+        .empty-state{margin:auto; text-align:center; color:var(--muted); padding:40px 20px;}
+
+        .row{
+            display:flex; align-items:center; gap:12px; cursor:pointer;
+            background:var(--card); border:1px solid var(--border); border-radius:14px;
+            padding:16px; transition:transform .08s ease, box-shadow .12s ease;
+        }
+        .row:hover{box-shadow:0 4px 14px rgba(0,0,0,.06); transform:translateY(-1px);}
+        .row:active{transform:translateY(0);}
+        .row.blog{border-left:3px solid var(--accent);}
+        .row .name{
+            flex:1 1 auto; font-weight:600; font-size:16px;
+            overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+        }
+        .row .count{
+            flex:0 0 auto; font-size:12px; color:var(--muted);
+            background:#f1f2f4; padding:3px 9px; border-radius:999px;
+        }
+        .row .edited{flex:0 0 auto; color:var(--accent); font-size:13px;}
+        .row .chev{flex:0 0 auto; color:#c2c7cf; font-size:20px; line-height:1;}
+        .delete-checkbox{flex:0 0 auto; width:18px; height:18px; display:none;}
+
+        /* 편집(숨기기) 모드 */
+        #list-screen.edit-mode .delete-checkbox{display:block;}
+        #list-screen.edit-mode .row{cursor:default;}
+        #list-screen.edit-mode .row:hover{transform:none; box-shadow:none;}
+
+        /* 본문 읽기 화면 */
+        #reader-screen{
+            flex:1 1 auto; min-height:0; display:none; flex-direction:column;
+        }
+        #content-frame{flex:1 1 auto; width:100%; border:none; background:#fff;}
+        #content-edit{
+            flex:1 1 auto; width:100%; padding:20px; overflow-y:auto; display:none;
+            background:var(--edit); outline:none; line-height:1.7;
+        }
+        #reader-nav{
+            flex:0 0 auto; display:flex; align-items:center; justify-content:center; gap:24px;
+            padding:10px; background:var(--card); border-top:1px solid var(--border);
+            padding-bottom:calc(10px + env(safe-area-inset-bottom));
+        }
+        #reader-nav button{
+            width:48px; height:48px; border:none; border-radius:50%; cursor:pointer;
+            background:#f1f2f4; color:var(--text); font-size:20px; line-height:1;
+        }
+        #reader-nav button:hover:not(:disabled){background:var(--accent); color:#fff;}
+        #reader-nav button:disabled{opacity:.35; cursor:default;}
+        #reader-position{font-size:14px; color:var(--muted); min-width:64px; text-align:center;}
     </style>
 </head>
 <body>
-    <div class="sidebar">
-        <div class="sidebar-header">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <div style="display:flex; align-items:center;">
-                    <button id="back-btn" class="btn btn-back" style="display:none;" onclick="goBackToBlogs()">← 목록</button>
-                    <h2 id="sidebar-title" style="margin:0;">📚 단어장</h2>
-                </div>
-                <div>
-                    <button id="edit-btn" class="btn btn-edit" onclick="toggleEditMode()">목록 편집</button>
-                    <button id="delete-btn" class="btn btn-delete" onclick="deleteSelected()">숨기기</button>
-                </div>
+    <div id="app">
+        <header id="topbar">
+            <button id="back-btn" onclick="goBack()" aria-label="뒤로">‹</button>
+            <h1 id="screen-title">단어장</h1>
+
+            <div id="list-actions" class="actions">
+                <button id="edit-btn" class="tb-btn" onclick="toggleEditMode()">편집</button>
+                <button id="delete-btn" class="tb-btn danger" style="display:none;" onclick="deleteSelected()">숨기기</button>
             </div>
-            <div id="sync-status" class="sync-status">🔄 로딩 중...</div>
-        </div>
-        <div class="list-container">
-            <ul class="post-list" id="post-list" style="list-style:none; margin:0; padding:0;"></ul>
-        </div>
-    </div>
-    <div class="main-content">
-        <div id="header-bar" class="header-bar" style="display:none;">
-            <span id="header-title" style="font-weight:bold;"></span>
-            <div>
-                <a id="header-link" href="#" target="_blank" style="color:#3498db; text-decoration:none; font-weight:bold; margin-right:10px;">🔗 원본</a>
-                <button id="content-edit-btn" class="btn btn-content-edit" onclick="toggleContentEdit()">✏️ 본문 편집</button>
-                <button id="content-save-btn" class="btn btn-content-save" style="display:none;" onclick="saveContentEdit()">💾 서버에 저장</button>
-                <button id="content-cancel-btn" class="btn btn-content-cancel" style="display:none;" onclick="cancelContentEdit()">취소</button>
+
+            <div id="reader-actions" class="actions">
+                <a id="header-link" href="#" target="_blank" class="tb-btn link">원본</a>
+                <button id="content-edit-btn" class="tb-btn" onclick="toggleContentEdit()">편집</button>
+                <button id="content-save-btn" class="tb-btn primary" style="display:none;" onclick="saveContentEdit()">저장</button>
+                <button id="content-cancel-btn" class="tb-btn" style="display:none;" onclick="cancelContentEdit()">취소</button>
             </div>
-        </div>
-        <iframe id="content-frame" style="display: none;"></iframe>
-        <div id="content-edit" style="display:none;"></div>
+        </header>
+
+        <div id="sync-status">🔄 로딩 중...</div>
+
+        <!-- 블로그 목록 / 글 목록 (같은 컨테이너 재사용) -->
+        <main id="list-screen">
+            <ul id="post-list" style="display:contents; list-style:none; margin:0; padding:0;"></ul>
+        </main>
+
+        <!-- 본문 읽기 -->
+        <section id="reader-screen">
+            <iframe id="content-frame"></iframe>
+            <div id="content-edit"></div>
+            <nav id="reader-nav">
+                <button id="prev-post" onclick="gotoPost(-1)" aria-label="이전 글">‹</button>
+                <span id="reader-position"></span>
+                <button id="next-post" onclick="gotoPost(1)" aria-label="다음 글">›</button>
+            </nav>
+        </section>
     </div>
-    
+
     <script>
-        // 전역 데이터 배열
+        // 전역 데이터 배열 (id/*.js 파일들이 채움)
         window.blogsData = [];
-        
+
         // 파이썬 설정값 치환
-        const FIREBASE_URL = "https://blog-aaa78-default-rtdb.asia-southeast1.firebasedatabase.app/"; 
-        
+        const FIREBASE_URL = "https://blog-aaa78-default-rtdb.asia-southeast1.firebasedatabase.app/";
+
         let isEditMode = false;
-        let currentView = 'blogs';
+        let currentView = 'blogs';      // 'blogs' | 'posts' | 'reader'
         let currentBlogId = null;
         let currentContentId = null;
         let currentContentUrl = null;
+        let currentVisiblePosts = [];   // 현재 블로그의 (숨김 제외) 글 목록 — 이전/다음 이동용
+        let currentPostIndex = -1;
 
         let dbData = { deleted_blogs: {}, deleted_posts: {}, content_overrides: {} };
 
-        document.addEventListener('DOMContentLoaded', async function() { 
+        document.addEventListener('DOMContentLoaded', async function() {
             await loadAllBlogDataFiles();
             await loadFirebaseData();
-            renderBlogList(); 
+            renderBlogList();
         });
 
-        // 2. _id_list.js에서 가져온 activeBlogIds를 바탕으로 개별 JS 파일들을 동적으로 불러옵니다.
+        // _id_list.js의 activeBlogIds를 바탕으로 개별 데이터 JS를 동적 로드
         async function loadAllBlogDataFiles() {
             if (typeof activeBlogIds === 'undefined' || activeBlogIds.length === 0) {
-                document.getElementById('sync-status').innerText = "📂 등록된 데이터가 없습니다.";
+                setStatus("📂 등록된 데이터가 없습니다.", "#e74c3c");
                 return;
             }
-            
-            const promises = activeBlogIds.map(id => {
-                return new Promise((resolve) => {
-                    const script = document.createElement('script');
-                    script.src = `id/${id}.js`;
-                    script.onload = resolve;
-                    script.onerror = () => {
-                        console.warn(`${id}.js 파일을 찾을 수 없습니다. _id_list.js를 확인하세요.`);
-                        resolve(); // 하나가 실패해도 나머지는 로드되도록 진행
-                    };
-                    document.head.appendChild(script);
-                });
-            });
-            
+            const promises = activeBlogIds.map(id => new Promise((resolve) => {
+                const script = document.createElement('script');
+                script.src = `id/${id}.js`;
+                script.onload = resolve;
+                script.onerror = () => {
+                    console.warn(`${id}.js 파일을 찾을 수 없습니다. _id_list.js를 확인하세요.`);
+                    resolve(); // 하나 실패해도 나머지는 진행
+                };
+                document.head.appendChild(script);
+            }));
             await Promise.all(promises);
         }
 
         async function loadFirebaseData() {
             if (!FIREBASE_URL || FIREBASE_URL === "__" + "FIREBASE_DB_URL" + "__") {
-                document.getElementById('sync-status').innerText = "⚠️ 오프라인 모드";
-                document.getElementById('sync-status').style.color = "#e74c3c";
+                setStatus("⚠️ 오프라인 모드", "#e74c3c");
                 return;
             }
             try {
@@ -124,12 +212,10 @@
                 dbData.deleted_blogs = data.deleted_blogs || {};
                 dbData.deleted_posts = data.deleted_posts || {};
                 dbData.content_overrides = data.content_overrides || {};
-                
-                document.getElementById('sync-status').innerText = "✅ 클라우드 동기화 완료";
+                setStatus("✅ 클라우드 동기화 완료", "#2ecc71");
             } catch (err) {
                 console.error("Firebase 로드 오류", err);
-                document.getElementById('sync-status').innerText = "❌ 클라우드 연결 실패";
-                document.getElementById('sync-status').style.color = "#e74c3c";
+                setStatus("❌ 클라우드 연결 실패", "#e74c3c");
             }
         }
 
@@ -143,7 +229,13 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(value)
                 });
-            } catch(e) { console.error("Firebase 저장 오류", e); }
+            } catch (e) { console.error("Firebase 저장 오류", e); }
+        }
+
+        function setStatus(text, color) {
+            const el = document.getElementById('sync-status');
+            el.innerText = text;
+            if (color) el.style.color = color;
         }
 
         function escapeHtml(str) {
@@ -152,102 +244,132 @@
             return div.innerHTML;
         }
 
+        // 화면 전환: 어떤 컨테이너/버튼을 보일지만 결정 (제목은 각 render가 설정)
+        function setScreen(view) {
+            currentView = view;
+            const isReader = (view === 'reader');
+            document.getElementById('list-screen').style.display   = isReader ? 'none' : 'flex';
+            document.getElementById('reader-screen').style.display = isReader ? 'flex' : 'none';
+            document.getElementById('back-btn').style.display      = (view === 'blogs') ? 'none' : 'inline-flex';
+            document.getElementById('list-actions').style.display  = isReader ? 'none' : 'flex';
+            document.getElementById('reader-actions').style.display= isReader ? 'flex' : 'none';
+        }
+
+        // 현재 블로그에서 숨기지 않은 글 목록
+        function getVisiblePosts(blogId) {
+            const blog = window.blogsData.find(b => b.id === blogId);
+            if (!blog) return [];
+            const deleted = dbData.deleted_posts[blogId] || {};
+            return blog.posts.filter(p => !deleted[p.id]);
+        }
+
         function renderBlogList() {
-            currentView = 'blogs';
-            currentBlogId = null;
             isEditMode = false;
-            document.getElementById('back-btn').style.display = 'none';
-            document.getElementById('sidebar-title').innerText = '📚 블로그 목록';
-            document.getElementById('header-bar').style.display = 'none';
-            document.getElementById('content-frame').style.display = 'none';
-            document.getElementById('content-edit').style.display = 'none';
+            setScreen('blogs');
+            document.getElementById('screen-title').innerText = '단어장';
             updateEditButtons();
 
             const listEl = document.getElementById('post-list');
             listEl.innerHTML = '';
-            
+
             const visibleBlogs = window.blogsData.filter(b => !dbData.deleted_blogs[b.id]);
             if (visibleBlogs.length === 0) {
                 listEl.innerHTML = '<div class="empty-state">표시할 블로그가 없어요.</div>';
                 return;
             }
-            
+
             visibleBlogs.forEach(blog => {
-                const deletedPostCount = dbData.deleted_posts[blog.id] ? Object.keys(dbData.deleted_posts[blog.id]).length : 0;
-                const remainingCount = blog.posts.length - deletedPostCount;
+                const deletedCount = dbData.deleted_posts[blog.id] ? Object.keys(dbData.deleted_posts[blog.id]).length : 0;
+                const remaining = blog.posts.length - deletedCount;
                 const li = document.createElement('li');
-                li.className = 'blog-item';
-                li.id = 'blog_' + blog.id;
-                li.innerHTML = "<input type='checkbox' class='delete-checkbox' value='" + blog.id + "'> " +
-                    "<span class='blog-name' onclick=\"onBlogClick('" + blog.id + "')\">" + escapeHtml(blog.name) + "</span>" +
-                    "<span class='blog-count'>" + remainingCount + "개</span>";
+                li.className = 'row blog';
+                li.setAttribute('onclick', `onRowClick('blog','${blog.id}', this)`);
+                li.innerHTML =
+                    "<input type='checkbox' class='delete-checkbox' value='" + blog.id + "' onclick='event.stopPropagation()'>" +
+                    "<span class='name'>" + escapeHtml(blog.name) + "</span>" +
+                    "<span class='count'>" + remaining + "</span>" +
+                    "<span class='chev'>›</span>";
                 listEl.appendChild(li);
             });
         }
 
-        function onBlogClick(blogId) { if (!isEditMode) selectBlog(blogId); }
-
-        function selectBlog(blogId) {
-            currentBlogId = blogId;
-            renderPostList(blogId);
-        }
-
         function renderPostList(blogId) {
-            currentView = 'posts';
-            currentBlogId = blogId;
             isEditMode = false;
+            currentBlogId = blogId;
             const blog = window.blogsData.find(b => b.id === blogId);
             if (!blog) return;
-            document.getElementById('back-btn').style.display = 'inline-block';
-            document.getElementById('sidebar-title').innerText = '📑 ' + blog.name;
-            document.getElementById('header-bar').style.display = 'none';
-            document.getElementById('content-frame').style.display = 'none';
-            document.getElementById('content-edit').style.display = 'none';
+
+            setScreen('posts');
+            document.getElementById('screen-title').innerText = blog.name;
             updateEditButtons();
 
             const listEl = document.getElementById('post-list');
             listEl.innerHTML = '';
-            
-            const visiblePosts = blog.posts.filter(p => !(dbData.deleted_posts[blogId] && dbData.deleted_posts[blogId][p.id]));
+
+            const visiblePosts = getVisiblePosts(blogId);
             if (visiblePosts.length === 0) {
                 listEl.innerHTML = '<div class="empty-state">표시할 글이 없어요.</div>';
                 return;
             }
-            
+
             visiblePosts.forEach(post => {
-                const isEdited = dbData.content_overrides[blogId] && dbData.content_overrides[blogId][post.id] ? " ✏️" : "";
+                const edited = (dbData.content_overrides[blogId] && dbData.content_overrides[blogId][post.id]) ? "<span class='edited'>✏️</span>" : "";
                 const li = document.createElement('li');
-                li.className = 'post-item';
-                li.id = post.id;
-                li.innerHTML = "<input type='checkbox' class='delete-checkbox' value='" + post.id + "'> " +
-                    "<div class='post-title' onclick=\"onPostClick('" + blogId + "', '" + post.id + "')\">" + escapeHtml(post.title) + isEdited + "</div>";
+                li.className = 'row';
+                li.setAttribute('onclick', `onRowClick('post','${post.id}', this)`);
+                li.innerHTML =
+                    "<input type='checkbox' class='delete-checkbox' value='" + post.id + "' onclick='event.stopPropagation()'>" +
+                    "<span class='name'>" + escapeHtml(post.title) + "</span>" +
+                    edited +
+                    "<span class='chev'>›</span>";
                 listEl.appendChild(li);
             });
         }
 
-        function onPostClick(blogId, postId) {
-            if (isEditMode) return;
-            const blog = window.blogsData.find(b => b.id === blogId);
-            const post = blog ? blog.posts.find(p => p.id === postId) : null;
-            loadContent(blogId, postId, post.title);
+        // 목록 행 클릭: 편집모드면 선택 토글, 아니면 진입
+        function onRowClick(kind, id, el) {
+            if (isEditMode) {
+                const cb = el.querySelector('.delete-checkbox');
+                if (cb) cb.checked = !cb.checked;
+                return;
+            }
+            if (kind === 'blog') renderPostList(id);
+            else loadContent(currentBlogId, id);
         }
 
-        // ▼▼▼ 추가: 본문 HTML을 화면에 보이기 직전에 한 번 가공 ▼▼▼
+        // ── 본문 가공 파이프라인 ──
         // 순서가 중요합니다.
-        //   1) restoreGifLinks : 빈 GIF 링크 블록을 <img>로 복구 (먼저 img를 만들어 둠)
-        //   2) embedYoutube    : 유튜브 <a> 링크를 iframe 임베드로 변환
-        //   3) removeEmptyOembed: 영상 자리에 남은 빈 oembed 박스 제거
-        //   4) addNoReferrer   : 모든 <img>에 referrerpolicy="no-referrer" 부여
-        //                        (네이버 CDN의 referer 기반 핫링크 차단 우회 → 1)에서 복구한 GIF까지 포함)
+        //   1) restoreGifLinks   : 빈 GIF 링크 블록을 <img>로 복구
+        //   2) embedYoutube      : 유튜브 <a>를 iframe 임베드로
+        //   3) removeEmptyOembed : 영상 자리의 빈 oembed 박스 제거
+        //   4) addNoReferrer     : 모든 <img>에 referrerpolicy="no-referrer"
+        //   5) injectReadingStyle: 읽기용 기본 타이포(글자·줄간격·여백) 주입
         function processContentHtml(html) {
-            if (typeof restoreGifLinks === 'function') html = restoreGifLinks(html);
-            if (typeof embedYoutube === 'function') html = embedYoutube(html);
+            if (typeof restoreGifLinks === 'function')   html = restoreGifLinks(html);
+            if (typeof embedYoutube === 'function')      html = embedYoutube(html);
             if (typeof removeEmptyOembed === 'function') html = removeEmptyOembed(html);
-            if (typeof addNoReferrer === 'function') html = addNoReferrer(html);
+            if (typeof addNoReferrer === 'function')     html = addNoReferrer(html);
+            html = injectReadingStyle(html);
             return html;
         }
 
-        // ▼▼▼ 추가: 원본(또는 편집본)을 fetch → 가공 → srcdoc 으로 렌더링 ▼▼▼
+        // ponytail: 읽기 기본 스타일 주입.
+        //   ceiling — 이 스타일은 "기본값"이라 블로그 원본이 같은 속성을 직접 지정하면 원본이 이김.
+        //             모든 글을 강제로 통일하려면 각 규칙에 !important를 붙이면 됨(취향에 따라).
+        function injectReadingStyle(html) {
+            const style = "<style id='reader-base'>"
+                + "html{font-size:17px;}"
+                + "body{max-width:680px;margin:0 auto;padding:20px 18px;line-height:1.75;"
+                + "color:#1f2933;word-break:keep-all;overflow-wrap:anywhere;"
+                + "font-family:'Malgun Gothic',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;}"
+                + "img,video,iframe{max-width:100%;height:auto;}"
+                + "</style>";
+            if (/<head[^>]*>/i.test(html)) return html.replace(/<head[^>]*>/i, m => m + style);
+            if (/<body[^>]*>/i.test(html)) return html.replace(/<body[^>]*>/i, m => m + style);
+            return style + html; // head/body 없는 조각(fragment)
+        }
+
+        // 원본(또는 편집본) fetch → 가공 → srcdoc 렌더
         async function renderContentToFrame() {
             const frame = document.getElementById('content-frame');
             const contentId = currentContentId;
@@ -267,45 +389,62 @@
                 }
             }
 
-            // fetch를 기다리는 사이 사용자가 다른 글을 클릭했다면 덮어쓰지 않음 (경합 방지)
+            // fetch 대기 중 사용자가 다른 글로 넘어갔으면 덮어쓰지 않음 (경합 방지)
             if (currentContentId !== contentId) return;
 
             frame.removeAttribute('src');
             frame.srcdoc = processContentHtml(html);
         }
 
-        function loadContent(blogId, postId, displayTitle) {
-            currentContentId = postId;
-            currentBlogId = blogId;
-            // 불러오는 경로를 source 폴더로 변경했습니다.
-            currentContentUrl = 'source/' + blogId + '/' + postId + '.html';
+        function loadContent(blogId, postId) {
             const blog = window.blogsData.find(b => b.id === blogId);
-            const post = blog ? blog.posts.find(p => p.id === postId) : null;
+            if (!blog) return;
+            const visible = getVisiblePosts(blogId);
+            const idx = visible.findIndex(p => p.id === postId);
+            const post = visible[idx] || blog.posts.find(p => p.id === postId);
+            if (!post) return;
 
-            document.getElementById('header-bar').style.display = 'flex';
-            document.getElementById('header-title').innerText = displayTitle;
-            document.getElementById('header-link').href = post ? post.link : '#';
+            currentBlogId = blogId;
+            currentContentId = postId;
+            currentContentUrl = 'source/' + blogId + '/' + postId + '.html';
+            currentVisiblePosts = visible;
+            currentPostIndex = idx;
 
-            const frame = document.getElementById('content-frame');
-            const editDiv = document.getElementById('content-edit');
-            editDiv.style.display = 'none';
-            frame.style.display = 'block';
+            setScreen('reader');
+            document.getElementById('screen-title').innerText = post.title;
+            document.getElementById('header-link').href = post.link || '#';
 
-            // 원본/편집본을 가공해서 iframe에 표시 (이미지·유튜브가 보이게 됨)
-            renderContentToFrame();
-            
-            document.getElementById('content-edit-btn').style.display = 'inline-block';
+            // 본문 편집 UI 초기화
+            document.getElementById('content-edit-btn').style.display = 'inline-flex';
             document.getElementById('content-save-btn').style.display = 'none';
             document.getElementById('content-cancel-btn').style.display = 'none';
+            document.getElementById('content-edit').style.display = 'none';
+            document.getElementById('content-frame').style.display = 'block';
+            document.getElementById('reader-nav').style.display = 'flex';
+
+            updateNav();
+            renderContentToFrame();
+        }
+
+        function updateNav() {
+            const total = currentVisiblePosts.length;
+            document.getElementById('reader-position').innerText = total ? (currentPostIndex + 1) + ' / ' + total : '';
+            document.getElementById('prev-post').disabled = currentPostIndex <= 0;
+            document.getElementById('next-post').disabled = currentPostIndex >= total - 1;
+        }
+
+        function gotoPost(delta) {
+            const t = currentPostIndex + delta;
+            if (t < 0 || t >= currentVisiblePosts.length) return;
+            loadContent(currentBlogId, currentVisiblePosts[t].id);
         }
 
         async function toggleContentEdit() {
             if (!currentContentUrl) return;
             const editDiv = document.getElementById('content-edit');
             const frame = document.getElementById('content-frame');
-            
+
             let html = dbData.content_overrides[currentBlogId] && dbData.content_overrides[currentBlogId][currentContentId];
-            
             if (!html) {
                 try {
                     const res = await fetch(currentContentUrl);
@@ -316,38 +455,35 @@
                     return;
                 }
             }
-            
+
             editDiv.innerHTML = html;
             editDiv.setAttribute('contenteditable', 'true');
             frame.style.display = 'none';
             editDiv.style.display = 'block';
-            
+            document.getElementById('reader-nav').style.display = 'none';
+
             document.getElementById('content-edit-btn').style.display = 'none';
-            document.getElementById('content-save-btn').style.display = 'inline-block';
-            document.getElementById('content-cancel-btn').style.display = 'inline-block';
+            document.getElementById('content-save-btn').style.display = 'inline-flex';
+            document.getElementById('content-cancel-btn').style.display = 'inline-flex';
             editDiv.focus();
         }
 
         async function saveContentEdit() {
             const editDiv = document.getElementById('content-edit');
             const newHtml = editDiv.innerHTML;
-            
-            document.getElementById('sync-status').innerText = "☁️ 클라우드 저장 중...";
-            
+
+            setStatus("☁️ 클라우드 저장 중...", "#2ecc71");
+
             if (!dbData.content_overrides[currentBlogId]) dbData.content_overrides[currentBlogId] = {};
             dbData.content_overrides[currentBlogId][currentContentId] = newHtml;
-            
+
             await updateFirebase(`content_overrides/${currentBlogId}/${currentContentId}`, newHtml);
-            
-            document.getElementById('sync-status').innerText = "✅ 클라우드 저장 완료";
-            
-            exitContentEditView();
-            renderPostList(currentBlogId); 
+            setStatus("✅ 클라우드 저장 완료", "#2ecc71");
+
+            exitContentEditView(); // 저장 후엔 읽기 화면에 그대로 머무름
         }
 
-        function cancelContentEdit() { 
-            exitContentEditView(); 
-        }
+        function cancelContentEdit() { exitContentEditView(); }
 
         function exitContentEditView() {
             const frame = document.getElementById('content-frame');
@@ -355,13 +491,13 @@
             editDiv.removeAttribute('contenteditable');
             editDiv.style.display = 'none';
             frame.style.display = 'block';
-            
-            // 저장/취소 후에도 동일하게 가공해서 표시
-            renderContentToFrame();
-            
-            document.getElementById('content-edit-btn').style.display = 'inline-block';
+            document.getElementById('reader-nav').style.display = 'flex';
+
+            document.getElementById('content-edit-btn').style.display = 'inline-flex';
             document.getElementById('content-save-btn').style.display = 'none';
             document.getElementById('content-cancel-btn').style.display = 'none';
+
+            renderContentToFrame(); // 저장한 편집본으로 다시 렌더
         }
 
         function toggleEditMode() {
@@ -370,21 +506,20 @@
         }
 
         function updateEditButtons() {
-            document.querySelectorAll('.delete-checkbox').forEach(cb => cb.style.display = isEditMode ? 'inline-block' : 'none');
-            document.getElementById('delete-btn').style.display = isEditMode ? 'inline-block' : 'none';
-            document.getElementById('edit-btn').innerText = isEditMode ? '편집 완료' : '목록 편집';
+            document.getElementById('list-screen').classList.toggle('edit-mode', isEditMode);
+            document.getElementById('delete-btn').style.display = isEditMode ? 'inline-flex' : 'none';
+            document.getElementById('edit-btn').innerText = isEditMode ? '완료' : '편집';
         }
 
         async function deleteSelected() {
             const checked = document.querySelectorAll('.delete-checkbox:checked');
-            document.getElementById('sync-status').innerText = "☁️ 클라우드 동기화 중...";
-            
+            setStatus("☁️ 클라우드 동기화 중...", "#2ecc71");
+
             if (currentView === 'blogs') {
                 for (let cb of checked) {
                     dbData.deleted_blogs[cb.value] = true;
                     await updateFirebase(`deleted_blogs/${cb.value}`, true);
                 }
-                isEditMode = false;
                 renderBlogList();
             } else if (currentView === 'posts' && currentBlogId) {
                 if (!dbData.deleted_posts[currentBlogId]) dbData.deleted_posts[currentBlogId] = {};
@@ -392,17 +527,24 @@
                     dbData.deleted_posts[currentBlogId][cb.value] = true;
                     await updateFirebase(`deleted_posts/${currentBlogId}/${cb.value}`, true);
                 }
-                isEditMode = false;
                 renderPostList(currentBlogId);
             }
-            
-            document.getElementById('header-bar').style.display = 'none';
-            document.getElementById('content-frame').style.display = 'none';
-            document.getElementById('content-edit').style.display = 'none';
-            document.getElementById('sync-status').innerText = "✅ 동기화 완료";
+            setStatus("✅ 동기화 완료", "#2ecc71");
         }
 
-        function goBackToBlogs() { renderBlogList(); }
+        // 뒤로가기: 본문 → 글목록 → 블로그목록
+        function goBack() {
+            if (currentView === 'reader') renderPostList(currentBlogId);
+            else if (currentView === 'posts') renderBlogList();
+        }
+
+        // ponytail self-check: 읽기 스타일이 올바른 위치에 주입되는지 1회 검증(실패 시에만 콘솔 경고)
+        (function () {
+            const withHead = injectReadingStyle("<html><head><meta charset='utf-8'></head><body>x</body></html>");
+            console.assert(/<head[^>]*>\s*<style id='reader-base'/i.test(withHead), "injectReadingStyle: <head> 케이스 위치 오류");
+            const fragment = injectReadingStyle("<p>조각</p>");
+            console.assert(fragment.indexOf("reader-base") !== -1, "injectReadingStyle: fragment 케이스 누락");
+        })();
     </script>
 </body>
 </html>
