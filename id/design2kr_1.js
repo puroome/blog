@@ -1,0 +1,92 @@
+window.blogsData = window.blogsData || [];
+(function() {
+    let blog = {
+        "id": "design2kr_1",
+        "name": "design2kr_1",
+        "blogUrl": "https://blog.naver.com/design2kr",
+        "categoryNo": "27",
+        "parentCategoryNo": "",
+        "posts": []
+    };
+    blog.posts.push({"id": "post_40043348321", "title": "write", "link": "https://blog.naver.com/design2kr/40043348321"});
+    blog.posts.push({"id": "post_40043323841", "title": "talk", "link": "https://blog.naver.com/design2kr/40043323841"});
+    blog.posts.push({"id": "post_40043347208", "title": "want", "link": "https://blog.naver.com/design2kr/40043347208"});
+    blog.posts.push({"id": "post_40043320374", "title": "study", "link": "https://blog.naver.com/design2kr/40043320374"});
+    blog.posts.push({"id": "post_40043347291", "title": "watch", "link": "https://blog.naver.com/design2kr/40043347291"});
+    blog.posts.push({"id": "post_40043326364", "title": "turn", "link": "https://blog.naver.com/design2kr/40043326364"});
+    blog.posts.push({"id": "post_40043324201", "title": "teach", "link": "https://blog.naver.com/design2kr/40043324201"});
+    blog.posts.push({"id": "post_40043323406", "title": "take", "link": "https://blog.naver.com/design2kr/40043323406"});
+    blog.posts.push({"id": "post_40043345579", "title": "walk", "link": "https://blog.naver.com/design2kr/40043345579"});
+    blog.posts.push({"id": "post_40043325434", "title": "throw", "link": "https://blog.naver.com/design2kr/40043325434"});
+    blog.posts.push({"id": "post_40043324436", "title": "tell", "link": "https://blog.naver.com/design2kr/40043324436"});
+    blog.posts.push({"id": "post_40043324921", "title": "think", "link": "https://blog.naver.com/design2kr/40043324921"});
+    blog.posts.push({"id": "post_40043343760", "title": "use", "link": "https://blog.naver.com/design2kr/40043343760"});
+    blog.posts.push({"id": "post_40043325880", "title": "try", "link": "https://blog.naver.com/design2kr/40043325880"});
+    blog.posts.push({"id": "post_40043344444", "title": "wait", "link": "https://blog.naver.com/design2kr/40043344444"});
+    blog.posts.push({"id": "post_40043348188", "title": "work", "link": "https://blog.naver.com/design2kr/40043348188"});
+    blog.posts.push({"id": "post_40043285767", "title": "say", "link": "https://blog.naver.com/design2kr/40043285767"});
+    blog.posts.push({"id": "post_40043287547", "title": "send", "link": "https://blog.naver.com/design2kr/40043287547"});
+    blog.posts.push({"id": "post_40043286615", "title": "see", "link": "https://blog.naver.com/design2kr/40043286615"});
+    blog.posts.push({"id": "post_40043317982", "title": "start", "link": "https://blog.naver.com/design2kr/40043317982"});
+    blog.posts.push({"id": "post_40043316453", "title": "sing", "link": "https://blog.naver.com/design2kr/40043316453"});
+    blog.posts.push({"id": "post_40043317752", "title": "stand", "link": "https://blog.naver.com/design2kr/40043317752"});
+    blog.posts.push({"id": "post_40043319917", "title": "stop", "link": "https://blog.naver.com/design2kr/40043319917"});
+    blog.posts.push({"id": "post_40043315705", "title": "sign", "link": "https://blog.naver.com/design2kr/40043315705"});
+    blog.posts.push({"id": "post_40043316661", "title": "sit", "link": "https://blog.naver.com/design2kr/40043316661"});
+    blog.posts.push({"id": "post_40043286921", "title": "sell", "link": "https://blog.naver.com/design2kr/40043286921"});
+    blog.posts.push({"id": "post_40043316927", "title": "sleep", "link": "https://blog.naver.com/design2kr/40043316927"});
+    blog.posts.push({"id": "post_40043317545", "title": "spend", "link": "https://blog.naver.com/design2kr/40043317545"});
+    blog.posts.push({"id": "post_40043319544", "title": "stay", "link": "https://blog.naver.com/design2kr/40043319544"});
+    blog.posts.push({"id": "post_40043315372", "title": "set", "link": "https://blog.naver.com/design2kr/40043315372"});
+    blog.posts.push({"id": "post_40043285628", "title": "run", "link": "https://blog.naver.com/design2kr/40043285628"});
+    blog.posts.push({"id": "post_40043317347", "title": "speak", "link": "https://blog.naver.com/design2kr/40043317347"});
+    blog.posts.push({"id": "post_40043242274", "title": "pass", "link": "https://blog.naver.com/design2kr/40043242274"});
+    blog.posts.push({"id": "post_40043008167", "title": "know", "link": "https://blog.naver.com/design2kr/40043008167"});
+    blog.posts.push({"id": "post_40043209524", "title": "listen", "link": "https://blog.naver.com/design2kr/40043209524"});
+    blog.posts.push({"id": "post_40043210471", "title": "look", "link": "https://blog.naver.com/design2kr/40043210471"});
+    blog.posts.push({"id": "post_40043210124", "title": "lock", "link": "https://blog.naver.com/design2kr/40043210124"});
+    blog.posts.push({"id": "post_40043210776", "title": "lose", "link": "https://blog.naver.com/design2kr/40043210776"});
+    blog.posts.push({"id": "post_40043247478", "title": "play", "link": "https://blog.naver.com/design2kr/40043247478"});
+    blog.posts.push({"id": "post_40043285337", "title": "read", "link": "https://blog.naver.com/design2kr/40043285337"});
+    blog.posts.push({"id": "post_40043213464", "title": "open", "link": "https://blog.naver.com/design2kr/40043213464"});
+    blog.posts.push({"id": "post_40043212292", "title": "make", "link": "https://blog.naver.com/design2kr/40043212292"});
+    blog.posts.push({"id": "post_40043009040", "title": "leave", "link": "https://blog.naver.com/design2kr/40043009040"});
+    blog.posts.push({"id": "post_40043209850", "title": "live", "link": "https://blog.naver.com/design2kr/40043209850"});
+    blog.posts.push({"id": "post_40043248713", "title": "put", "link": "https://blog.naver.com/design2kr/40043248713"});
+    blog.posts.push({"id": "post_40043246710", "title": "pay", "link": "https://blog.naver.com/design2kr/40043246710"});
+    blog.posts.push({"id": "post_40042975916", "title": "have", "link": "https://blog.naver.com/design2kr/40042975916"});
+    blog.posts.push({"id": "post_40043212994", "title": "move", "link": "https://blog.naver.com/design2kr/40043212994"});
+    blog.posts.push({"id": "post_40042320926", "title": "drink", "link": "https://blog.naver.com/design2kr/40042320926"});
+    blog.posts.push({"id": "post_40042741543", "title": "find", "link": "https://blog.naver.com/design2kr/40042741543"});
+    blog.posts.push({"id": "post_40042429174", "title": "feel", "link": "https://blog.naver.com/design2kr/40042429174"});
+    blog.posts.push({"id": "post_40042880424", "title": "go", "link": "https://blog.naver.com/design2kr/40042880424"});
+    blog.posts.push({"id": "post_40042289452", "title": "draw", "link": "https://blog.naver.com/design2kr/40042289452"});
+    blog.posts.push({"id": "post_40042102784", "title": "cut", "link": "https://blog.naver.com/design2kr/40042102784"});
+    blog.posts.push({"id": "post_40042602670", "title": "fill", "link": "https://blog.naver.com/design2kr/40042602670"});
+    blog.posts.push({"id": "post_40042423390", "title": "fall", "link": "https://blog.naver.com/design2kr/40042423390"});
+    blog.posts.push({"id": "post_40042137584", "title": "do", "link": "https://blog.naver.com/design2kr/40042137584"});
+    blog.posts.push({"id": "post_40042774106", "title": "fly", "link": "https://blog.naver.com/design2kr/40042774106"});
+    blog.posts.push({"id": "post_40042356515", "title": "drive", "link": "https://blog.naver.com/design2kr/40042356515"});
+    blog.posts.push({"id": "post_40042772424", "title": "finish", "link": "https://blog.naver.com/design2kr/40042772424"});
+    blog.posts.push({"id": "post_40042840470", "title": "get", "link": "https://blog.naver.com/design2kr/40042840470"});
+    blog.posts.push({"id": "post_40042389000", "title": "eat", "link": "https://blog.naver.com/design2kr/40042389000"});
+    blog.posts.push({"id": "post_40042773181", "title": "fix", "link": "https://blog.naver.com/design2kr/40042773181"});
+    blog.posts.push({"id": "post_40042879558", "title": "give", "link": "https://blog.naver.com/design2kr/40042879558"});
+    blog.posts.push({"id": "post_40041560047", "title": "ask 로 시작하는 숙어", "link": "https://blog.naver.com/design2kr/40041560047"});
+    blog.posts.push({"id": "post_40042069926", "title": "come", "link": "https://blog.naver.com/design2kr/40042069926"});
+    blog.posts.push({"id": "post_40042040082", "title": "close", "link": "https://blog.naver.com/design2kr/40042040082"});
+    blog.posts.push({"id": "post_40041835798", "title": "buy", "link": "https://blog.naver.com/design2kr/40041835798"});
+    blog.posts.push({"id": "post_40041587606", "title": "back 으로 시작하는 숙어", "link": "https://blog.naver.com/design2kr/40041587606"});
+    blog.posts.push({"id": "post_40041692594", "title": "break 로 시작하는 숙어", "link": "https://blog.naver.com/design2kr/40041692594"});
+    blog.posts.push({"id": "post_40041801848", "title": "build", "link": "https://blog.naver.com/design2kr/40041801848"});
+    blog.posts.push({"id": "post_40041657691", "title": "blow 로 시작하는 숙어", "link": "https://blog.naver.com/design2kr/40041657691"});
+    blog.posts.push({"id": "post_40041411788", "title": "필독!!! 전치사와 부사 의 뉘앙스", "link": "https://blog.naver.com/design2kr/40041411788"});
+    blog.posts.push({"id": "post_40041900174", "title": "carry", "link": "https://blog.naver.com/design2kr/40041900174"});
+    blog.posts.push({"id": "post_40041623585", "title": "be 로 시작하는 숙어", "link": "https://blog.naver.com/design2kr/40041623585"});
+    blog.posts.push({"id": "post_40041933847", "title": "clean", "link": "https://blog.naver.com/design2kr/40041933847"});
+    blog.posts.push({"id": "post_40041800770", "title": "bring", "link": "https://blog.naver.com/design2kr/40041800770"});
+    blog.posts.push({"id": "post_40041901257", "title": "catch", "link": "https://blog.naver.com/design2kr/40041901257"});
+    blog.posts.push({"id": "post_40041833699", "title": "burn", "link": "https://blog.naver.com/design2kr/40041833699"});
+    blog.posts.push({"id": "post_40041869314", "title": "call", "link": "https://blog.naver.com/design2kr/40041869314"});
+    window.blogsData.push(blog);
+})();
