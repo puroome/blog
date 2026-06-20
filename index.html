@@ -58,11 +58,18 @@
         .tb-btn.danger{background:#fde8e8; color:var(--danger);}
         .tb-btn.link{background:transparent; color:var(--accent); padding:7px 4px;}
 
-        /* 동기화 상태: 두 화면 모두에서 항상 보이도록 상단 바 바로 아래 슬림 라인 */
+        /* 동기화 상태: 평소엔 숨고, 동작 시에만 잠깐 떴다 사라지는 토스트 */
         #sync-status{
-            flex:0 0 auto; padding:6px 16px; font-size:12px; font-weight:600;
-            color:#2ecc71; background:var(--card); border-bottom:1px solid var(--border);
+            position:fixed; top:14px; left:50%;
+            transform:translateX(-50%) translateY(-8px);
+            z-index:100; max-width:90vw;
+            padding:8px 16px; font-size:13px; font-weight:700; color:#2ecc71;
+            background:var(--card); border:1px solid var(--border); border-radius:999px;
+            box-shadow:0 6px 20px rgba(0,0,0,.12);
+            opacity:0; pointer-events:none;
+            transition:opacity .25s ease, transform .25s ease;
         }
+        #sync-status.show{ opacity:1; transform:translateX(-50%) translateY(0); }
 
         /* 목록 화면 (블로그/글 공용) */
         #list-screen{
@@ -138,7 +145,7 @@
             </div>
         </header>
 
-        <div id="sync-status">🔄 로딩 중...</div>
+        <div id="sync-status"></div>
 
         <!-- 블로그 목록 / 글 목록 (같은 컨테이너 재사용) -->
         <main id="list-screen">
@@ -183,7 +190,7 @@
         // _id_list.js의 activeBlogIds를 바탕으로 개별 데이터 JS를 동적 로드
         async function loadAllBlogDataFiles() {
             if (typeof activeBlogIds === 'undefined' || activeBlogIds.length === 0) {
-                setStatus("📂 등록된 데이터가 없습니다.", "#e74c3c");
+                setStatus("📂 등록된 데이터가 없습니다.", "#e74c3c", true);
                 return;
             }
             const promises = activeBlogIds.map(id => new Promise((resolve) => {
@@ -201,7 +208,7 @@
 
         async function loadFirebaseData() {
             if (!FIREBASE_URL || FIREBASE_URL === "__" + "FIREBASE_DB_URL" + "__") {
-                setStatus("⚠️ 오프라인 모드", "#e74c3c");
+                setStatus("⚠️ 오프라인 모드", "#e74c3c", true);
                 return;
             }
             try {
@@ -215,7 +222,7 @@
                 setStatus("✅ 클라우드 동기화 완료", "#2ecc71");
             } catch (err) {
                 console.error("Firebase 로드 오류", err);
-                setStatus("❌ 클라우드 연결 실패", "#e74c3c");
+                setStatus("❌ 클라우드 연결 실패", "#e74c3c", true);
             }
         }
 
@@ -232,10 +239,15 @@
             } catch (e) { console.error("Firebase 저장 오류", e); }
         }
 
-        function setStatus(text, color) {
+        let _statusTimer = null;
+        // 토스트: 메시지를 잠깐 띄움. persist=true면(주로 오류) 자동으로 사라지지 않음.
+        function setStatus(text, color, persist) {
             const el = document.getElementById('sync-status');
             el.innerText = text;
             if (color) el.style.color = color;
+            el.classList.add('show');
+            clearTimeout(_statusTimer);
+            if (!persist) _statusTimer = setTimeout(() => el.classList.remove('show'), 2500);
         }
 
         function escapeHtml(str) {
@@ -255,12 +267,23 @@
             document.getElementById('reader-actions').style.display= isReader ? 'flex' : 'none';
         }
 
-        // 현재 블로그에서 숨기지 않은 글 목록
+        // ponytail: id가 시간순(예: 네이버 블로그 logNo — 숫자가 클수록 최신)이라고 가정해 정렬.
+        //   ceiling — id가 시간과 무관한 형식이면 "최신순"이 어긋남.
+        //             그 경우 글의 작성일이 담긴 필드명을 알려주면 그 값 기준으로 바꿔줌.
+        function compareId(a, b) {
+            const na = Number(a), nb = Number(b);
+            if (!isNaN(na) && !isNaN(nb)) return na - nb;     // 둘 다 숫자면 숫자 비교
+            return String(a).localeCompare(String(b), 'ko');  // 아니면 문자 비교
+        }
+
+        // 현재 블로그에서 숨기지 않은 글 목록 (최신 글이 위로)
         function getVisiblePosts(blogId) {
             const blog = window.blogsData.find(b => b.id === blogId);
             if (!blog) return [];
             const deleted = dbData.deleted_posts[blogId] || {};
-            return blog.posts.filter(p => !deleted[p.id]);
+            return blog.posts
+                .filter(p => !deleted[p.id])
+                .sort((a, b) => compareId(b.id, a.id)); // 큰 id(최신) 먼저 → 내림차순
         }
 
         function renderBlogList() {
@@ -272,7 +295,9 @@
             const listEl = document.getElementById('post-list');
             listEl.innerHTML = '';
 
-            const visibleBlogs = window.blogsData.filter(b => !dbData.deleted_blogs[b.id]);
+            const visibleBlogs = window.blogsData
+                .filter(b => !dbData.deleted_blogs[b.id])
+                .sort((a, b) => compareId(a.id, b.id)); // ID 오름차순 고정
             if (visibleBlogs.length === 0) {
                 listEl.innerHTML = '<div class="empty-state">표시할 블로그가 없어요.</div>';
                 return;
@@ -544,6 +569,9 @@
             console.assert(/<head[^>]*>\s*<style id='reader-base'/i.test(withHead), "injectReadingStyle: <head> 케이스 위치 오류");
             const fragment = injectReadingStyle("<p>조각</p>");
             console.assert(fragment.indexOf("reader-base") !== -1, "injectReadingStyle: fragment 케이스 누락");
+            // 정렬 검증
+            console.assert(["100","20","3"].sort((a,b)=>compareId(b,a)).join() === "100,20,3", "compareId: 숫자 내림차순 오류");
+            console.assert(["b","a","c"].sort((a,b)=>compareId(a,b)).join() === "a,b,c", "compareId: 문자 오름차순 오류");
         })();
     </script>
 </body>
