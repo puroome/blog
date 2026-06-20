@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>나만의 단어장 (Cloud Sync)</title>
+    <script src="id/_id_list.js"></script>
+    <style>
+        body { font-family: 'Malgun Gothic', sans-serif; margin: 0; padding: 0; display: flex; height: 100vh; background-color: #f4f6f8; overflow: hidden; }
+        .sidebar { width: 35%; background: #ffffff; border-right: 1px solid #ddd; display: flex; flex-direction: column; }
+        .sidebar-header { padding: 20px; border-bottom: 2px solid #3498db; }
+        .btn { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-edit { background-color: #f39c12; color: white; }
+        .btn-back { background-color: #95a5a6; color: white; margin-right: 10px; }
+        .btn-delete { background-color: #e74c3c; color: white; display: none; margin-left: 10px; }
+        .sync-status { font-size: 12px; color: #2ecc71; margin-top: 10px; font-weight: bold; }
+        .list-container { overflow-y: auto; padding: 20px; flex-grow: 1; }
+        .post-item, .blog-item { display: flex; align-items: center; padding: 12px 15px; margin-bottom: 8px; background: #eaf2f8; border-radius: 6px; }
+        .blog-item { background: #fdf2e3; border-left: 4px solid #f39c12; }
+        .post-title { flex-grow: 1; cursor: pointer; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .blog-name { flex-grow: 1; cursor: pointer; font-weight: bold; font-size: 16px; }
+        .blog-count { font-size: 12px; color: #7f8c8d; margin-left: 8px; white-space: nowrap; }
+        .delete-checkbox { display: none; margin-right: 10px; }
+        .main-content { width: 65%; display: flex; flex-direction: column; background: white; }
+        .header-bar { padding: 15px; background: #ecf0f1; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; }
+        #content-frame { flex-grow: 1; width: 100%; border: none; }
+        .post-title[contenteditable="true"], .blog-name[contenteditable="true"] { cursor: text; white-space: normal; background: #fffbe6; outline: 2px dashed #f39c12; border-radius: 4px; padding: 2px 4px; }
+        #content-edit { flex-grow: 1; width: 100%; padding: 20px; overflow-y: auto; box-sizing: border-box; line-height: 1.6; }
+        #content-edit[contenteditable="true"] { background: #fffbe6; outline: 2px dashed #f39c12; outline-offset: -2px; }
+        .btn-content-edit { background-color: #16a085; color: white; }
+        .btn-content-save { background-color: #2980b9; color: white; }
+        .btn-content-cancel { background-color: #7f8c8d; color: white; }
+        .empty-state { padding: 40px 20px; text-align: center; color: #95a5a6; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div style="display:flex; align-items:center;">
+                    <button id="back-btn" class="btn btn-back" style="display:none;" onclick="goBackToBlogs()">← 목록</button>
+                    <h2 id="sidebar-title" style="margin:0;">📚 단어장</h2>
+                </div>
+                <div>
+                    <button id="edit-btn" class="btn btn-edit" onclick="toggleEditMode()">목록 편집</button>
+                    <button id="delete-btn" class="btn btn-delete" onclick="deleteSelected()">숨기기</button>
+                </div>
+            </div>
+            <div id="sync-status" class="sync-status">🔄 로딩 중...</div>
+        </div>
+        <div class="list-container">
+            <ul class="post-list" id="post-list" style="list-style:none; margin:0; padding:0;"></ul>
+        </div>
+    </div>
+    <div class="main-content">
+        <div id="header-bar" class="header-bar" style="display:none;">
+            <span id="header-title" style="font-weight:bold;"></span>
+            <div>
+                <a id="header-link" href="#" target="_blank" style="color:#3498db; text-decoration:none; font-weight:bold; margin-right:10px;">🔗 원본</a>
+                <button id="content-edit-btn" class="btn btn-content-edit" onclick="toggleContentEdit()">✏️ 본문 편집</button>
+                <button id="content-save-btn" class="btn btn-content-save" style="display:none;" onclick="saveContentEdit()">💾 서버에 저장</button>
+                <button id="content-cancel-btn" class="btn btn-content-cancel" style="display:none;" onclick="cancelContentEdit()">취소</button>
+            </div>
+        </div>
+        <iframe id="content-frame" style="display: none;"></iframe>
+        <div id="content-edit" style="display:none;"></div>
+    </div>
+    
+    <script>
+        // 전역 데이터 배열
+        window.blogsData = [];
+        
+        // 파이썬 설정값 치환
+        const FIREBASE_URL = "https://blog-aaa78-default-rtdb.asia-southeast1.firebasedatabase.app/"; 
+        
+        let isEditMode = false;
+        let currentView = 'blogs';
+        let currentBlogId = null;
+        let currentContentId = null;
+        let currentContentUrl = null;
+
+        let dbData = { deleted_blogs: {}, deleted_posts: {}, content_overrides: {} };
+
+        document.addEventListener('DOMContentLoaded', async function() { 
+            await loadAllBlogDataFiles();
+            await loadFirebaseData();
+            renderBlogList(); 
+        });
+
+        // 2. _id_list.js에서 가져온 activeBlogIds를 바탕으로 개별 JS 파일들을 동적으로 불러옵니다.
+        async function loadAllBlogDataFiles() {
+            if (typeof activeBlogIds === 'undefined' || activeBlogIds.length === 0) {
+                document.getElementById('sync-status').innerText = "📂 등록된 데이터가 없습니다.";
+                return;
+            }
+            
+            const promises = activeBlogIds.map(id => {
+                return new Promise((resolve) => {
+                    const script = document.createElement('script');
+                    script.src = `id/${id}.js`;
+                    script.onload = resolve;
+                    script.onerror = () => {
+                        console.warn(`${id}.js 파일을 찾을 수 없습니다. _id_list.js를 확인하세요.`);
+                        resolve(); // 하나가 실패해도 나머지는 로드되도록 진행
+                    };
+                    document.head.appendChild(script);
+                });
+            });
+            
+            await Promise.all(promises);
+        }
+
+        async function loadFirebaseData() {
+            if (!FIREBASE_URL || FIREBASE_URL === "__" + "FIREBASE_DB_URL" + "__") {
+                document.getElementById('sync-status').innerText = "⚠️ 오프라인 모드";
+                document.getElementById('sync-status').style.color = "#e74c3c";
+                return;
+            }
+            try {
+                let url = FIREBASE_URL;
+                if (!url.endsWith('/')) url += '/';
+                const res = await fetch(url + '.json');
+                const data = await res.json() || {};
+                dbData.deleted_blogs = data.deleted_blogs || {};
+                dbData.deleted_posts = data.deleted_posts || {};
+                dbData.content_overrides = data.content_overrides || {};
+                
+                document.getElementById('sync-status').innerText = "✅ 클라우드 동기화 완료";
+            } catch (err) {
+                console.error("Firebase 로드 오류", err);
+                document.getElementById('sync-status').innerText = "❌ 클라우드 연결 실패";
+                document.getElementById('sync-status').style.color = "#e74c3c";
+            }
+        }
+
+        async function updateFirebase(path, value) {
+            if (!FIREBASE_URL || FIREBASE_URL === "__" + "FIREBASE_DB_URL" + "__") return;
+            try {
+                let url = FIREBASE_URL;
+                if (!url.endsWith('/')) url += '/';
+                await fetch(url + path + '.json', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(value)
+                });
+            } catch(e) { console.error("Firebase 저장 오류", e); }
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.innerText = str;
+            return div.innerHTML;
+        }
+
+        function renderBlogList() {
+            currentView = 'blogs';
+            currentBlogId = null;
+            isEditMode = false;
+            document.getElementById('back-btn').style.display = 'none';
+            document.getElementById('sidebar-title').innerText = '📚 블로그 목록';
+            document.getElementById('header-bar').style.display = 'none';
+            document.getElementById('content-frame').style.display = 'none';
+            document.getElementById('content-edit').style.display = 'none';
+            updateEditButtons();
+
+            const listEl = document.getElementById('post-list');
+            listEl.innerHTML = '';
+            
+            const visibleBlogs = window.blogsData.filter(b => !dbData.deleted_blogs[b.id]);
+            if (visibleBlogs.length === 0) {
+                listEl.innerHTML = '<div class="empty-state">표시할 블로그가 없어요.</div>';
+                return;
+            }
+            
+            visibleBlogs.forEach(blog => {
+                const deletedPostCount = dbData.deleted_posts[blog.id] ? Object.keys(dbData.deleted_posts[blog.id]).length : 0;
+                const remainingCount = blog.posts.length - deletedPostCount;
+                const li = document.createElement('li');
+                li.className = 'blog-item';
+                li.id = 'blog_' + blog.id;
+                li.innerHTML = "<input type='checkbox' class='delete-checkbox' value='" + blog.id + "'> " +
+                    "<span class='blog-name' onclick=\"onBlogClick('" + blog.id + "')\">" + escapeHtml(blog.name) + "</span>" +
+                    "<span class='blog-count'>" + remainingCount + "개</span>";
+                listEl.appendChild(li);
+            });
+        }
+
+        function onBlogClick(blogId) { if (!isEditMode) selectBlog(blogId); }
+
+        function selectBlog(blogId) {
+            currentBlogId = blogId;
+            renderPostList(blogId);
+        }
+
+        function renderPostList(blogId) {
+            currentView = 'posts';
+            currentBlogId = blogId;
+            isEditMode = false;
+            const blog = window.blogsData.find(b => b.id === blogId);
+            if (!blog) return;
+            document.getElementById('back-btn').style.display = 'inline-block';
+            document.getElementById('sidebar-title').innerText = '📑 ' + blog.name;
+            document.getElementById('header-bar').style.display = 'none';
+            document.getElementById('content-frame').style.display = 'none';
+            document.getElementById('content-edit').style.display = 'none';
+            updateEditButtons();
+
+            const listEl = document.getElementById('post-list');
+            listEl.innerHTML = '';
+            
+            const visiblePosts = blog.posts.filter(p => !(dbData.deleted_posts[blogId] && dbData.deleted_posts[blogId][p.id]));
+            if (visiblePosts.length === 0) {
+                listEl.innerHTML = '<div class="empty-state">표시할 글이 없어요.</div>';
+                return;
+            }
+            
+            visiblePosts.forEach(post => {
+                const isEdited = dbData.content_overrides[blogId] && dbData.content_overrides[blogId][post.id] ? " ✏️" : "";
+                const li = document.createElement('li');
+                li.className = 'post-item';
+                li.id = post.id;
+                li.innerHTML = "<input type='checkbox' class='delete-checkbox' value='" + post.id + "'> " +
+                    "<div class='post-title' onclick=\"onPostClick('" + blogId + "', '" + post.id + "')\">" + escapeHtml(post.title) + isEdited + "</div>";
+                listEl.appendChild(li);
+            });
+        }
+
+        function onPostClick(blogId, postId) {
+            if (isEditMode) return;
+            const blog = window.blogsData.find(b => b.id === blogId);
+            const post = blog ? blog.posts.find(p => p.id === postId) : null;
+            loadContent(blogId, postId, post.title);
+        }
+
+        function loadContent(blogId, postId, displayTitle) {
+            currentContentId = postId;
+            currentBlogId = blogId;
+            // 불러오는 경로를 source 폴더로 변경했습니다.
+            currentContentUrl = 'source/' + blogId + '/' + postId + '.html';
+            const blog = window.blogsData.find(b => b.id === blogId);
+            const post = blog ? blog.posts.find(p => p.id === postId) : null;
+
+            document.getElementById('header-bar').style.display = 'flex';
+            document.getElementById('header-title').innerText = displayTitle;
+            document.getElementById('header-link').href = post ? post.link : '#';
+
+            const frame = document.getElementById('content-frame');
+            const editDiv = document.getElementById('content-edit');
+            editDiv.style.display = 'none';
+            frame.style.display = 'block';
+
+            const overrideHtml = dbData.content_overrides[blogId] && dbData.content_overrides[blogId][postId];
+            if (overrideHtml) {
+                frame.removeAttribute('src');
+                frame.srcdoc = overrideHtml;
+            } else {
+                frame.removeAttribute('srcdoc');
+                frame.src = currentContentUrl;
+            }
+            
+            document.getElementById('content-edit-btn').style.display = 'inline-block';
+            document.getElementById('content-save-btn').style.display = 'none';
+            document.getElementById('content-cancel-btn').style.display = 'none';
+        }
+
+        async function toggleContentEdit() {
+            if (!currentContentUrl) return;
+            const editDiv = document.getElementById('content-edit');
+            const frame = document.getElementById('content-frame');
+            
+            let html = dbData.content_overrides[currentBlogId] && dbData.content_overrides[currentBlogId][currentContentId];
+            
+            if (!html) {
+                try {
+                    const res = await fetch(currentContentUrl);
+                    if (!res.ok) throw new Error('fetch failed');
+                    html = await res.text();
+                } catch (err) {
+                    alert('원본 텍스트를 불러오지 못했습니다.');
+                    return;
+                }
+            }
+            
+            editDiv.innerHTML = html;
+            editDiv.setAttribute('contenteditable', 'true');
+            frame.style.display = 'none';
+            editDiv.style.display = 'block';
+            
+            document.getElementById('content-edit-btn').style.display = 'none';
+            document.getElementById('content-save-btn').style.display = 'inline-block';
+            document.getElementById('content-cancel-btn').style.display = 'inline-block';
+            editDiv.focus();
+        }
+
+        async function saveContentEdit() {
+            const editDiv = document.getElementById('content-edit');
+            const newHtml = editDiv.innerHTML;
+            
+            document.getElementById('sync-status').innerText = "☁️ 클라우드 저장 중...";
+            
+            if (!dbData.content_overrides[currentBlogId]) dbData.content_overrides[currentBlogId] = {};
+            dbData.content_overrides[currentBlogId][currentContentId] = newHtml;
+            
+            await updateFirebase(`content_overrides/${currentBlogId}/${currentContentId}`, newHtml);
+            
+            document.getElementById('sync-status').innerText = "✅ 클라우드 저장 완료";
+            
+            exitContentEditView(newHtml);
+            renderPostList(currentBlogId); 
+        }
+
+        function cancelContentEdit() { 
+            const html = dbData.content_overrides[currentBlogId] && dbData.content_overrides[currentBlogId][currentContentId];
+            exitContentEditView(html); 
+        }
+
+        function exitContentEditView(overrideHtml) {
+            const frame = document.getElementById('content-frame');
+            const editDiv = document.getElementById('content-edit');
+            editDiv.removeAttribute('contenteditable');
+            editDiv.style.display = 'none';
+            frame.style.display = 'block';
+            
+            if (overrideHtml) {
+                frame.removeAttribute('src');
+                frame.srcdoc = overrideHtml;
+            } else {
+                frame.removeAttribute('srcdoc');
+                frame.src = currentContentUrl;
+            }
+            
+            document.getElementById('content-edit-btn').style.display = 'inline-block';
+            document.getElementById('content-save-btn').style.display = 'none';
+            document.getElementById('content-cancel-btn').style.display = 'none';
+        }
+
+        function toggleEditMode() {
+            isEditMode = !isEditMode;
+            updateEditButtons();
+        }
+
+        function updateEditButtons() {
+            document.querySelectorAll('.delete-checkbox').forEach(cb => cb.style.display = isEditMode ? 'inline-block' : 'none');
+            document.getElementById('delete-btn').style.display = isEditMode ? 'inline-block' : 'none';
+            document.getElementById('edit-btn').innerText = isEditMode ? '편집 완료' : '목록 편집';
+        }
+
+        async function deleteSelected() {
+            const checked = document.querySelectorAll('.delete-checkbox:checked');
+            document.getElementById('sync-status').innerText = "☁️ 클라우드 동기화 중...";
+            
+            if (currentView === 'blogs') {
+                for (let cb of checked) {
+                    dbData.deleted_blogs[cb.value] = true;
+                    await updateFirebase(`deleted_blogs/${cb.value}`, true);
+                }
+                isEditMode = false;
+                renderBlogList();
+            } else if (currentView === 'posts' && currentBlogId) {
+                if (!dbData.deleted_posts[currentBlogId]) dbData.deleted_posts[currentBlogId] = {};
+                for (let cb of checked) {
+                    dbData.deleted_posts[currentBlogId][cb.value] = true;
+                    await updateFirebase(`deleted_posts/${currentBlogId}/${cb.value}`, true);
+                }
+                isEditMode = false;
+                renderPostList(currentBlogId);
+            }
+            
+            document.getElementById('header-bar').style.display = 'none';
+            document.getElementById('content-frame').style.display = 'none';
+            document.getElementById('content-edit').style.display = 'none';
+            document.getElementById('sync-status').innerText = "✅ 동기화 완료";
+        }
+
+        function goBackToBlogs() { renderBlogList(); }
+    </script>
+</body>
+</html>
