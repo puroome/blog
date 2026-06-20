@@ -15,7 +15,6 @@ window.blogsData = window.blogsData || [];
     blog.posts.push({"id": "post_224299661261", "title": "[독해 구조패턴] “That all you need is love is clear” — 상위 1%만 아는 구조", "link": "https://blog.naver.com/kangreading/224299661261"});
     blog.posts.push({"id": "post_224302834887", "title": "[독해 구조패턴] 30년 강의 끝에 내린 결론 — 영어 실력은 '보는 순서'가 결정한다", "link": "https://blog.naver.com/kangreading/224302834887"});
     blog.posts.push({"id": "post_224304499097", "title": "[독해 구조패턴] 콤마(,) 하나로 영문 해석이 달라진다", "link": "https://blog.naver.com/kangreading/224304499097"});
-    blog.posts.push({"id": "post_223013862938", "title": "[강쌤GRE] 2011.8월~2021.2월 GRE 후기단어 모음집 <무료배포>", "link": "https://blog.naver.com/kangreading/223013862938"});
     blog.posts.push({"id": "post_224318499200", "title": "[독해 패턴구조] 6. 문장 맨 앞 All, Some, Many, Much, Few, Little은주어이거나 주어 일부", "link": "https://blog.naver.com/kangreading/224318499200"});
     blog.posts.push({"id": "post_224310205189", "title": "[독해 패턴구조] 2. 문장 맨 앞 Whether절, Where절, When절은주어이거나 부사어", "link": "https://blog.naver.com/kangreading/224310205189"});
     blog.posts.push({"id": "post_224312415508", "title": "[독해 패턴구조] 3. 문장 맨 앞 Why절과 How절은 주어", "link": "https://blog.naver.com/kangreading/224312415508"});
