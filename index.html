@@ -127,10 +127,12 @@
             background:var(--edit); outline:none; line-height:1.7;
         }
         #reader-nav{
-            flex:0 0 auto; display:flex; align-items:center; justify-content:center; gap:24px;
-            padding:10px; background:rgba(168,85,247,.2); border-top:1px solid var(--border);
+            flex:0 0 auto; display:flex; align-items:center; justify-content:space-between;
+            padding:10px 16px; background:rgba(168,85,247,.2); border-top:1px solid var(--border);
             padding-bottom:calc(10px + env(safe-area-inset-bottom));
         }
+        .nav-spacer{ flex:1 1 0; }
+        .nav-center{ flex:0 0 auto; display:flex; align-items:center; gap:24px; }
         #reader-nav button{
             width:48px; height:48px; border:none; border-radius:50%; cursor:pointer;
             background:#f1f2f4; color:var(--text); font-size:20px; line-height:1;
@@ -138,6 +140,11 @@
         #reader-nav button:hover:not(:disabled){background:var(--accent); color:#fff;}
         #reader-nav button:disabled{opacity:.35; cursor:default;}
         #reader-position{font-size:14px; color:var(--muted); min-width:64px; text-align:center;}
+        #learn-toggle{
+            flex:1 1 0; display:flex; align-items:center; justify-content:flex-end; gap:6px;
+            cursor:pointer; user-select:none; font-size:14px; font-weight:600; color:var(--text);
+        }
+        #learn-checkbox{ width:20px; height:20px; cursor:pointer; }
     </style>
 </head>
 <body>
@@ -171,9 +178,13 @@
             <iframe id="content-frame"></iframe>
             <div id="content-edit"></div>
             <nav id="reader-nav">
-                <button id="prev-post" onclick="gotoPost(-1)" aria-label="이전 글">‹</button>
-                <span id="reader-position"></span>
-                <button id="next-post" onclick="gotoPost(1)" aria-label="다음 글">›</button>
+                <span class="nav-spacer"></span>
+                <div class="nav-center">
+                    <button id="prev-post" onclick="gotoPost(-1)" aria-label="이전 글">‹</button>
+                    <span id="reader-position"></span>
+                    <button id="next-post" onclick="gotoPost(1)" aria-label="다음 글">›</button>
+                </div>
+                <label id="learn-toggle"><input type="checkbox" id="learn-checkbox" onchange="toggleLearned()"> 학습</label>
             </nav>
         </section>
     </div>
@@ -193,13 +204,14 @@
         let currentVisiblePosts = [];   // 현재 블로그의 (숨김 제외) 글 목록 — 이전/다음 이동용
         let currentPostIndex = -1;
 
-        let dbData = { deleted_blogs: {}, deleted_posts: {}, content_overrides: {} };
+        let dbData = { deleted_blogs: {}, deleted_posts: {}, content_overrides: {}, learned: {} };
 
         document.addEventListener('DOMContentLoaded', async function() {
             await loadAllBlogDataFiles();
             await loadFirebaseData();
             renderBlogList();
-            trapBack(); // 뒤로가기 가로채기 시작
+            history.replaceState({ guard: true }, '');      // 진입 지점(가드): 첫 화면에서 뒤로가도 앱을 벗어나지 않게
+            history.pushState({ screen: 'blogs' }, '');       // 그 위에 첫 화면
         });
 
         // _id_list.js의 activeBlogIds를 바탕으로 개별 데이터 JS를 동적 로드
@@ -234,6 +246,7 @@
                 dbData.deleted_blogs = data.deleted_blogs || {};
                 dbData.deleted_posts = data.deleted_posts || {};
                 dbData.content_overrides = data.content_overrides || {};
+                dbData.learned = data.learned || {};
                 setStatus("✅ 클라우드 동기화 완료", "#2ecc71");
             } catch (err) {
                 console.error("Firebase 로드 오류", err);
@@ -310,6 +323,33 @@
                 .sort((a, b) => compareId(b.id, a.id)); // 큰 id(최신) 먼저 → 내림차순
         }
 
+        // 학습 여부
+        function isLearned(blogId, postId) {
+            return !!(dbData.learned[blogId] && dbData.learned[blogId][postId]);
+        }
+        // 블로그의 (보이는) 모든 글이 학습 완료인지
+        function isBlogFullyLearned(blogId) {
+            const visible = getVisiblePosts(blogId);
+            return visible.length > 0 && visible.every(p => isLearned(blogId, p.id));
+        }
+
+        // 학습 체크 토글 → Firebase에 기록/해제
+        async function toggleLearned() {
+            const checked = document.getElementById('learn-checkbox').checked;
+            const blogId = currentBlogId, postId = currentContentId;
+            if (!blogId || !postId) return;
+            if (!dbData.learned[blogId]) dbData.learned[blogId] = {};
+            setStatus(checked ? "☁️ 학습 기록 중..." : "☁️ 학습 해제 중...", "#2ecc71");
+            if (checked) {
+                dbData.learned[blogId][postId] = true;
+                await updateFirebase(`learned/${blogId}/${postId}`, true);
+            } else {
+                delete dbData.learned[blogId][postId];
+                await updateFirebase(`learned/${blogId}/${postId}`, null); // null → RTDB에서 삭제
+            }
+            setStatus("✅ 동기화 완료", "#2ecc71");
+        }
+
         function renderBlogList() {
             isEditMode = false;
             setScreen('blogs');
@@ -331,7 +371,7 @@
                 const deletedCount = dbData.deleted_posts[blog.id] ? Object.keys(dbData.deleted_posts[blog.id]).length : 0;
                 const remaining = blog.posts.length - deletedCount;
                 const li = document.createElement('li');
-                li.className = 'row blog';
+                li.className = isBlogFullyLearned(blog.id) ? 'row' : 'row blog'; // 전부 학습 완료면 파란색 제거
                 li.setAttribute('onclick', `onRowClick('blog','${blog.id}', this)`);
                 li.innerHTML =
                     "<input type='checkbox' class='delete-checkbox' value='" + blog.id + "' onclick='event.stopPropagation()'>" +
@@ -364,7 +404,7 @@
             visiblePosts.forEach(post => {
                 const edited = (dbData.content_overrides[blogId] && dbData.content_overrides[blogId][post.id]) ? "<span class='edited'>✏️</span>" : "";
                 const li = document.createElement('li');
-                li.className = 'row post';
+                li.className = isLearned(blogId, post.id) ? 'row' : 'row post'; // 학습 완료면 노란색 제거
                 li.setAttribute('onclick', `onRowClick('post','${post.id}', this)`);
                 li.innerHTML =
                     "<input type='checkbox' class='delete-checkbox' value='" + post.id + "' onclick='event.stopPropagation()'>" +
@@ -382,8 +422,13 @@
                 if (cb) cb.checked = !cb.checked;
                 return;
             }
-            if (kind === 'blog') renderPostList(id);
-            else loadContent(currentBlogId, id);
+            if (kind === 'blog') {
+                history.pushState({ screen: 'posts', blogId: id }, '');
+                renderPostList(id);
+            } else {
+                history.pushState({ screen: 'reader', blogId: currentBlogId, postId: id }, '');
+                loadContent(currentBlogId, id);
+            }
         }
 
         // ── 본문 가공 파이프라인 ──
@@ -470,6 +515,7 @@
             document.getElementById('content-edit').style.display = 'none';
             document.getElementById('content-frame').style.display = 'block';
             document.getElementById('reader-nav').style.display = 'flex';
+            document.getElementById('learn-checkbox').checked = isLearned(blogId, postId); // 학습 체크 상태 반영
 
             updateNav();
             renderContentToFrame();
@@ -485,7 +531,9 @@
         function gotoPost(delta) {
             const t = currentPostIndex + delta;
             if (t < 0 || t >= currentVisiblePosts.length) return;
-            loadContent(currentBlogId, currentVisiblePosts[t].id);
+            const id = currentVisiblePosts[t].id;
+            history.replaceState({ screen: 'reader', blogId: currentBlogId, postId: id }, ''); // 이전/다음은 히스토리 교체(쌓지 않음)
+            loadContent(currentBlogId, id);
         }
 
         async function toggleContentEdit() {
@@ -581,26 +629,35 @@
             setStatus("✅ 동기화 완료", "#2ecc71");
         }
 
-        // 뒤로가기(화면 안 ‹ 버튼): 본문 → 글목록 → 블로그목록
-        function goBack() {
-            if (currentView === 'reader') renderPostList(currentBlogId);
-            else if (currentView === 'posts') renderBlogList();
+        // ── 히스토리 기반 화면 이동 (브라우저 뒤로/앞으로 버튼 지원) ──
+        // 각 화면을 히스토리 항목으로 저장 → 뒤로/앞으로가 화면 이동으로 동작.
+        function applyState(s) {
+            const screen = s && s.screen;
+            if (screen === 'posts') renderPostList(s.blogId);
+            else if (screen === 'reader') loadContent(s.blogId, s.postId);
+            else renderBlogList();
         }
 
-        // ── 폰/브라우저 뒤로가기 가로채기 ──
-        // 앱 밖으로 나가지 않고 내부 화면만 이동. 첫 화면(블로그 목록)에선 아무 동작 안 함.
-        function trapBack() { history.pushState(null, ''); }
+        // 화면 안 ‹ 버튼: 브라우저 뒤로가기와 동일하게 동작
+        function goBack() { history.back(); }
 
-        window.addEventListener('popstate', function () {
-            if (currentView === 'reader') {
-                const editing = document.getElementById('content-save-btn').style.display !== 'none';
-                if (editing) cancelContentEdit();       // 편집 중이면 편집만 닫기(미저장 내용 보호)
-                else renderPostList(currentBlogId);     // 본문 → 글 목록
-            } else if (currentView === 'posts') {
-                renderBlogList();                       // 글 목록 → 블로그 목록
+        window.addEventListener('popstate', function (e) {
+            // 본문 편집 중이면 편집만 닫고 현재 화면 유지(미저장 내용 보호)
+            const editing = currentView === 'reader' &&
+                document.getElementById('content-save-btn').style.display !== 'none';
+            if (editing) {
+                cancelContentEdit();
+                history.pushState({ screen: 'reader', blogId: currentBlogId, postId: currentContentId }, '');
+                return;
             }
-            // currentView === 'blogs' : 아무 동작 없음 → 앱에 머무름
-            trapBack();                                 // 항목을 다시 채워 계속 가로채기
+            const s = e.state;
+            if (!s || s.guard) {
+                // 첫 화면 아래(앱 밖)로 가려 함 → 막고 첫 화면 유지
+                renderBlogList();
+                history.pushState({ screen: 'blogs' }, '');
+            } else {
+                applyState(s);
+            }
         });
 
         // ponytail self-check: 읽기 스타일이 올바른 위치에 주입되는지 1회 검증(실패 시에만 콘솔 경고)
