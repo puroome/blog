@@ -348,7 +348,7 @@
             else delete dbData.learned[blogId][postId];
             setScreen('reader'); // 체크 즉시 위·아래 메뉴 색 갱신
             await updateFirebase(`learned/${blogId}/${postId}`, checked ? true : null); // null → RTDB에서 삭제
-            setStatus("✅ 동기화 완료", "#2ecc71");
+            setStatus("synced", "#2ecc71");
         }
 
         function renderBlogList() {
@@ -627,7 +627,7 @@
                 }
                 renderPostList(currentBlogId);
             }
-            setStatus("✅ 동기화 완료", "#2ecc71");
+            setStatus("synced", "#2ecc71");
         }
 
         // ── 히스토리 기반 화면 이동 (브라우저 뒤로/앞으로 버튼 지원) ──
