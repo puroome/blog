@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>나만의 단어장 (Cloud Sync)</title>
     <script src="id/_id_list.js"></script>
+    <script src="embed-helpers.js"></script>
     <style>
         body { font-family: 'Malgun Gothic', sans-serif; margin: 0; padding: 0; display: flex; height: 100vh; background-color: #f4f6f8; overflow: hidden; }
         .sidebar { width: 35%; background: #ffffff; border-right: 1px solid #ddd; display: flex; flex-direction: column; }
@@ -231,6 +232,48 @@
             loadContent(blogId, postId, post.title);
         }
 
+        // ▼▼▼ 추가: 본문 HTML을 화면에 보이기 직전에 한 번 가공 ▼▼▼
+        // 순서가 중요합니다.
+        //   1) restoreGifLinks : 빈 GIF 링크 블록을 <img>로 복구 (먼저 img를 만들어 둠)
+        //   2) embedYoutube    : 유튜브 <a> 링크를 iframe 임베드로 변환
+        //   3) removeEmptyOembed: 영상 자리에 남은 빈 oembed 박스 제거
+        //   4) addNoReferrer   : 모든 <img>에 referrerpolicy="no-referrer" 부여
+        //                        (네이버 CDN의 referer 기반 핫링크 차단 우회 → 1)에서 복구한 GIF까지 포함)
+        function processContentHtml(html) {
+            if (typeof restoreGifLinks === 'function') html = restoreGifLinks(html);
+            if (typeof embedYoutube === 'function') html = embedYoutube(html);
+            if (typeof removeEmptyOembed === 'function') html = removeEmptyOembed(html);
+            if (typeof addNoReferrer === 'function') html = addNoReferrer(html);
+            return html;
+        }
+
+        // ▼▼▼ 추가: 원본(또는 편집본)을 fetch → 가공 → srcdoc 으로 렌더링 ▼▼▼
+        async function renderContentToFrame() {
+            const frame = document.getElementById('content-frame');
+            const contentId = currentContentId;
+            const url = currentContentUrl;
+
+            const overrideHtml = dbData.content_overrides[currentBlogId] && dbData.content_overrides[currentBlogId][contentId];
+            let html;
+            if (overrideHtml) {
+                html = overrideHtml;
+            } else {
+                try {
+                    const res = await fetch(url);
+                    if (!res.ok) throw new Error('fetch failed');
+                    html = await res.text();
+                } catch (err) {
+                    html = "<!DOCTYPE html><html lang='ko'><head><meta charset='UTF-8'></head><body style='font-family:sans-serif;padding:20px;color:#e74c3c;'>본문을 불러오지 못했습니다.</body></html>";
+                }
+            }
+
+            // fetch를 기다리는 사이 사용자가 다른 글을 클릭했다면 덮어쓰지 않음 (경합 방지)
+            if (currentContentId !== contentId) return;
+
+            frame.removeAttribute('src');
+            frame.srcdoc = processContentHtml(html);
+        }
+
         function loadContent(blogId, postId, displayTitle) {
             currentContentId = postId;
             currentBlogId = blogId;
@@ -248,14 +291,8 @@
             editDiv.style.display = 'none';
             frame.style.display = 'block';
 
-            const overrideHtml = dbData.content_overrides[blogId] && dbData.content_overrides[blogId][postId];
-            if (overrideHtml) {
-                frame.removeAttribute('src');
-                frame.srcdoc = overrideHtml;
-            } else {
-                frame.removeAttribute('srcdoc');
-                frame.src = currentContentUrl;
-            }
+            // 원본/편집본을 가공해서 iframe에 표시 (이미지·유튜브가 보이게 됨)
+            renderContentToFrame();
             
             document.getElementById('content-edit-btn').style.display = 'inline-block';
             document.getElementById('content-save-btn').style.display = 'none';
@@ -304,29 +341,23 @@
             
             document.getElementById('sync-status').innerText = "✅ 클라우드 저장 완료";
             
-            exitContentEditView(newHtml);
+            exitContentEditView();
             renderPostList(currentBlogId); 
         }
 
         function cancelContentEdit() { 
-            const html = dbData.content_overrides[currentBlogId] && dbData.content_overrides[currentBlogId][currentContentId];
-            exitContentEditView(html); 
+            exitContentEditView(); 
         }
 
-        function exitContentEditView(overrideHtml) {
+        function exitContentEditView() {
             const frame = document.getElementById('content-frame');
             const editDiv = document.getElementById('content-edit');
             editDiv.removeAttribute('contenteditable');
             editDiv.style.display = 'none';
             frame.style.display = 'block';
             
-            if (overrideHtml) {
-                frame.removeAttribute('src');
-                frame.srcdoc = overrideHtml;
-            } else {
-                frame.removeAttribute('srcdoc');
-                frame.src = currentContentUrl;
-            }
+            // 저장/취소 후에도 동일하게 가공해서 표시
+            renderContentToFrame();
             
             document.getElementById('content-edit-btn').style.display = 'inline-block';
             document.getElementById('content-save-btn').style.display = 'none';
