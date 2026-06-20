@@ -85,7 +85,8 @@
         }
         .row:hover{box-shadow:0 4px 14px rgba(0,0,0,.06); transform:translateY(-1px);}
         .row:active{transform:translateY(0);}
-        .row.blog{border-left:3px solid var(--accent);}
+        .row.blog{background:rgba(59,130,246,.5); border-left:3px solid var(--accent);}
+        .row.post{background:rgba(250,204,21,.5);}
         .row .name{
             flex:1 1 auto; font-weight:600; font-size:16px;
             overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
@@ -114,7 +115,7 @@
         }
         #reader-nav{
             flex:0 0 auto; display:flex; align-items:center; justify-content:center; gap:24px;
-            padding:10px; background:var(--card); border-top:1px solid var(--border);
+            padding:10px; background:rgba(168,85,247,.5); border-top:1px solid var(--border);
             padding-bottom:calc(10px + env(safe-area-inset-bottom));
         }
         #reader-nav button{
@@ -130,7 +131,7 @@
     <div id="app">
         <header id="topbar">
             <button id="back-btn" onclick="goBack()" aria-label="뒤로">‹</button>
-            <h1 id="screen-title">단어장</h1>
+            <h1 id="screen-title">English Blog</h1>
 
             <div id="list-actions" class="actions">
                 <button id="edit-btn" class="tb-btn" onclick="toggleEditMode()">편집</button>
@@ -185,6 +186,7 @@
             await loadAllBlogDataFiles();
             await loadFirebaseData();
             renderBlogList();
+            trapBack(); // 뒤로가기 가로채기 시작
         });
 
         // _id_list.js의 activeBlogIds를 바탕으로 개별 데이터 JS를 동적 로드
@@ -265,6 +267,12 @@
             document.getElementById('back-btn').style.display      = (view === 'blogs') ? 'none' : 'inline-flex';
             document.getElementById('list-actions').style.display  = isReader ? 'none' : 'flex';
             document.getElementById('reader-actions').style.display= isReader ? 'flex' : 'none';
+
+            // 화면별 상단바 색 (블로그목록=빨강, 글목록=파랑, 본문=노랑) — 모두 50% 투명
+            const topbar = document.getElementById('topbar');
+            topbar.style.background = (view === 'blogs') ? 'rgba(239,68,68,.5)'
+                                    : (view === 'posts') ? 'rgba(59,130,246,.5)'
+                                    : 'rgba(250,204,21,.5)';
         }
 
         // ponytail: id가 시간순(예: 네이버 블로그 logNo — 숫자가 클수록 최신)이라고 가정해 정렬.
@@ -289,7 +297,7 @@
         function renderBlogList() {
             isEditMode = false;
             setScreen('blogs');
-            document.getElementById('screen-title').innerText = '단어장';
+            document.getElementById('screen-title').innerText = 'English Blog';
             updateEditButtons();
 
             const listEl = document.getElementById('post-list');
@@ -340,7 +348,7 @@
             visiblePosts.forEach(post => {
                 const edited = (dbData.content_overrides[blogId] && dbData.content_overrides[blogId][post.id]) ? "<span class='edited'>✏️</span>" : "";
                 const li = document.createElement('li');
-                li.className = 'row';
+                li.className = 'row post';
                 li.setAttribute('onclick', `onRowClick('post','${post.id}', this)`);
                 li.innerHTML =
                     "<input type='checkbox' class='delete-checkbox' value='" + post.id + "' onclick='event.stopPropagation()'>" +
@@ -557,11 +565,27 @@
             setStatus("✅ 동기화 완료", "#2ecc71");
         }
 
-        // 뒤로가기: 본문 → 글목록 → 블로그목록
+        // 뒤로가기(화면 안 ‹ 버튼): 본문 → 글목록 → 블로그목록
         function goBack() {
             if (currentView === 'reader') renderPostList(currentBlogId);
             else if (currentView === 'posts') renderBlogList();
         }
+
+        // ── 폰/브라우저 뒤로가기 가로채기 ──
+        // 앱 밖으로 나가지 않고 내부 화면만 이동. 첫 화면(블로그 목록)에선 아무 동작 안 함.
+        function trapBack() { history.pushState(null, ''); }
+
+        window.addEventListener('popstate', function () {
+            if (currentView === 'reader') {
+                const editing = document.getElementById('content-save-btn').style.display !== 'none';
+                if (editing) cancelContentEdit();       // 편집 중이면 편집만 닫기(미저장 내용 보호)
+                else renderPostList(currentBlogId);     // 본문 → 글 목록
+            } else if (currentView === 'posts') {
+                renderBlogList();                       // 글 목록 → 블로그 목록
+            }
+            // currentView === 'blogs' : 아무 동작 없음 → 앱에 머무름
+            trapBack();                                 // 항목을 다시 채워 계속 가로채기
+        });
 
         // ponytail self-check: 읽기 스타일이 올바른 위치에 주입되는지 1회 검증(실패 시에만 콘솔 경고)
         (function () {
