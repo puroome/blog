@@ -247,7 +247,7 @@
                 dbData.deleted_posts = data.deleted_posts || {};
                 dbData.content_overrides = data.content_overrides || {};
                 dbData.learned = data.learned || {};
-                setStatus("✅ 클라우드 동기화 완료", "#2ecc71");
+                setStatus("✅ synced", "#2ecc71");
             } catch (err) {
                 console.error("Firebase 로드 오류", err);
                 setStatus("❌ 클라우드 연결 실패", "#e74c3c", true);
