@@ -1,0 +1,105 @@
+window.blogsData = window.blogsData || [];
+(function() {
+    let blog = {
+        "id": "squiggles",
+        "name": "squiggles",
+        "platform": "tistory",
+        "blogUrl": "https://squiggles.tistory.com",
+        "categoryNo": "영어 표현",
+        "parentCategoryNo": "",
+        "posts": []
+    };
+    blog.posts.push({"id": "post_447", "title": "\"가까스로\", \"간신히\", \"겨우\"는 영어로?", "link": "https://squiggles.tistory.com/447"});
+    blog.posts.push({"id": "post_444", "title": "\"거두절미\", \"본론\"은 영어로? 재미있는 원어민 표현 배워보기!", "link": "https://squiggles.tistory.com/444"});
+    blog.posts.push({"id": "post_443", "title": "\"생생하다\", \"생생한 꿈\"은 영어로? 재미있는 원어민 표현 배워보기!", "link": "https://squiggles.tistory.com/443"});
+    blog.posts.push({"id": "post_445", "title": "\"간단명료\", \"단도직입\"은 영어로? 재미있는 원어민 표현 배워보기!", "link": "https://squiggles.tistory.com/445"});
+    blog.posts.push({"id": "post_442", "title": "\"주마등\"은 영어로? \"주마등처럼 지나간다\"는 영어로?", "link": "https://squiggles.tistory.com/442"});
+    blog.posts.push({"id": "post_446", "title": "\"돌려말하다\", \"말을 돌리다\"는 영어로? 재미있는 원어민 표현 배워보기!", "link": "https://squiggles.tistory.com/446"});
+    blog.posts.push({"id": "post_440", "title": "\"대비하다\", \"준비하다\"는 영어로? 재미있는 원어민 표현 배워보기!", "link": "https://squiggles.tistory.com/440"});
+    blog.posts.push({"id": "post_436", "title": "\"잘 맞다\", \"성격이 잘 맞다\"는 영어로?", "link": "https://squiggles.tistory.com/436"});
+    blog.posts.push({"id": "post_439", "title": "\"방심하다\", \"안일하다\"는 영어로? 재미있는 원어민 표현 배워보기!", "link": "https://squiggles.tistory.com/439"});
+    blog.posts.push({"id": "post_441", "title": "\"부지런하다\"는 영어로? 관련된 영어 속담 배워보기!", "link": "https://squiggles.tistory.com/441"});
+    blog.posts.push({"id": "post_437", "title": "\"철면피\", \"뻔뻔하다\", \"낯 두껍다\"는 영어로?", "link": "https://squiggles.tistory.com/437"});
+    blog.posts.push({"id": "post_438", "title": "\"신경 쓰이다\", \"짜증 나다\"는 영어로?", "link": "https://squiggles.tistory.com/438"});
+    blog.posts.push({"id": "post_432", "title": "\"만병통치약\" 영어로? Panacea의 뜻?", "link": "https://squiggles.tistory.com/432"});
+    blog.posts.push({"id": "post_431", "title": "\"최후의 수단\", \"필사적인\" 영어로? Hail Mary의 뜻?", "link": "https://squiggles.tistory.com/431"});
+    blog.posts.push({"id": "post_433", "title": "\"뒤척이다\" 영어로? 예문으로 배워보기!", "link": "https://squiggles.tistory.com/433"});
+    blog.posts.push({"id": "post_434", "title": "\"입장\", \"입장 바꿔 생각해봐\"는 영어로?", "link": "https://squiggles.tistory.com/434"});
+    blog.posts.push({"id": "post_430", "title": "\"본전\", \"밑져야 본전\" 영어로? 원어민 표현 배워보기!", "link": "https://squiggles.tistory.com/430"});
+    blog.posts.push({"id": "post_435", "title": "\"잘 통하다\", \"의견 일치\"는 영어로?", "link": "https://squiggles.tistory.com/435"});
+    blog.posts.push({"id": "post_429", "title": "Silver lining 뜻? 실버라이닝 무슨 뜻?", "link": "https://squiggles.tistory.com/429"});
+    blog.posts.push({"id": "post_425", "title": "\"길게 보다\", \"장기적으로\" 영어로? 재미있는 원어민 영어 표현 배워보기!", "link": "https://squiggles.tistory.com/425"});
+    blog.posts.push({"id": "post_426", "title": "\"큰 그림\", \"큰 그림을 그리다\" 영어로? 예문과 활용법 배워보기!", "link": "https://squiggles.tistory.com/426"});
+    blog.posts.push({"id": "post_427", "title": "\"좁은 시야\" 영어로? 원어민스러운 표현은?", "link": "https://squiggles.tistory.com/427"});
+    blog.posts.push({"id": "post_428", "title": "\"고진감래\", \"고생 끝에 낙이 온다\" 영어로?", "link": "https://squiggles.tistory.com/428"});
+    blog.posts.push({"id": "post_424", "title": "\"뻔한\", \"뻔하다\", \"뻔한 결과\"는 영어로?", "link": "https://squiggles.tistory.com/424"});
+    blog.posts.push({"id": "post_177", "title": "\"춘곤증\"은 영어로 어떻게 표현하죠?", "link": "https://squiggles.tistory.com/177"});
+    blog.posts.push({"id": "post_420", "title": "\"신경 꺼\", \"너나 잘해\" 영어로?", "link": "https://squiggles.tistory.com/420"});
+    blog.posts.push({"id": "post_423", "title": "\"형식적인\" \"그냥 형식적이다\" \"형식상\" 영어로?", "link": "https://squiggles.tistory.com/423"});
+    blog.posts.push({"id": "post_408", "title": "2023년 계묘년 토끼의 해는 영어로 어떻게? 토끼가 들어간 영어 속담은?", "link": "https://squiggles.tistory.com/408"});
+    blog.posts.push({"id": "post_421", "title": "\"오지랖이 넓다\", \"오지랖 부리다\" 영어로?", "link": "https://squiggles.tistory.com/421"});
+    blog.posts.push({"id": "post_422", "title": "\"유행\", \"유행하다\" 영어로?", "link": "https://squiggles.tistory.com/422"});
+    blog.posts.push({"id": "post_94", "title": "Extenuating circumstance 뜻? 정상 참작 영어로?", "link": "https://squiggles.tistory.com/94"});
+    blog.posts.push({"id": "post_104", "title": "\"깐부\" 배우 오영수, 한국인 최초로 골든글로브 남우조연상 수상! 트위터 반응 해석", "link": "https://squiggles.tistory.com/104"});
+    blog.posts.push({"id": "post_92", "title": "\"입맛이 까다롭다\", \"성격이 까다롭다\"는 영어로?", "link": "https://squiggles.tistory.com/92"});
+    blog.posts.push({"id": "post_89", "title": "Green-eyed 무슨 뜻이죠?", "link": "https://squiggles.tistory.com/89"});
+    blog.posts.push({"id": "post_117", "title": "입장 바꿔 생각하다 영어로?", "link": "https://squiggles.tistory.com/117"});
+    blog.posts.push({"id": "post_137", "title": "한국의 음력 설날 명절 인사는 영어로 어떻게? 음력은 영어로 어떻게?", "link": "https://squiggles.tistory.com/137"});
+    blog.posts.push({"id": "post_79", "title": "입이 싸다는 영어로 어떻게? Blabbermouth 뜻?", "link": "https://squiggles.tistory.com/79"});
+    blog.posts.push({"id": "post_87", "title": "맘에 안든다, 마음에 안들어! 원어민 영어로는 어떻게?", "link": "https://squiggles.tistory.com/87"});
+    blog.posts.push({"id": "post_77", "title": "\"입이 떡 벌어지다\"는 영어로 어떻게 표현하죠?", "link": "https://squiggles.tistory.com/77"});
+    blog.posts.push({"id": "post_78", "title": "입이 무겁다는 영어로 어떻게?", "link": "https://squiggles.tistory.com/78"});
+    blog.posts.push({"id": "post_81", "title": "임인년 호랑이의 해! 호랑이가 들어간 영어 속담과 표현은?", "link": "https://squiggles.tistory.com/81"});
+    blog.posts.push({"id": "post_83", "title": "터놓다, 터놓고 말하다 영어로 어떻게?", "link": "https://squiggles.tistory.com/83"});
+    blog.posts.push({"id": "post_57", "title": "불난 집에 부채질한다 영어로?", "link": "https://squiggles.tistory.com/57"});
+    blog.posts.push({"id": "post_66", "title": "일석이조 영어로? 비슷한 영어 속담, 표현?", "link": "https://squiggles.tistory.com/66"});
+    blog.posts.push({"id": "post_62", "title": "차라리 ~하겠다, 차라리는 영어로?", "link": "https://squiggles.tistory.com/62"});
+    blog.posts.push({"id": "post_56", "title": "설상가상 영어로? 엎친데 덮친격 영어로?", "link": "https://squiggles.tistory.com/56"});
+    blog.posts.push({"id": "post_76", "title": "\"말 그대로\"는 영어로 어떻게?", "link": "https://squiggles.tistory.com/76"});
+    blog.posts.push({"id": "post_61", "title": "뼈빠지게 일하다는 영어로? Grind 뜻?", "link": "https://squiggles.tistory.com/61"});
+    blog.posts.push({"id": "post_41", "title": "뻗다 영어로 어떻게?", "link": "https://squiggles.tistory.com/41"});
+    blog.posts.push({"id": "post_50", "title": "Binge 뜻? Binge eating/drinking/watching?", "link": "https://squiggles.tistory.com/50"});
+    blog.posts.push({"id": "post_40", "title": "백해무익 영어로 어떻게? 예문들로 배워요!", "link": "https://squiggles.tistory.com/40"});
+    blog.posts.push({"id": "post_48", "title": "MBTI 알파벳 각각 뜻! MBTI 약자로 배우는 영어!", "link": "https://squiggles.tistory.com/48"});
+    blog.posts.push({"id": "post_51", "title": "Stuff one's face 뜻! 과식하다, 마구 먹다 영어로?", "link": "https://squiggles.tistory.com/51"});
+    blog.posts.push({"id": "post_52", "title": "식곤증 영어로? Food Coma?", "link": "https://squiggles.tistory.com/52"});
+    blog.posts.push({"id": "post_39", "title": "양날의 검 영어로?", "link": "https://squiggles.tistory.com/39"});
+    blog.posts.push({"id": "post_34", "title": "살얼음판 영어로? 아슬아슬하다 영어로? Skating on thin ice 뜻?", "link": "https://squiggles.tistory.com/34"});
+    blog.posts.push({"id": "post_36", "title": "지긋지긋하다 영어로? 진절머리가 나다 영어로?", "link": "https://squiggles.tistory.com/36"});
+    blog.posts.push({"id": "post_35", "title": "On the edge 뜻? Living on the edge 뜻?", "link": "https://squiggles.tistory.com/35"});
+    blog.posts.push({"id": "post_38", "title": "회사 윗선 영어로? 수뇌부 영어로?", "link": "https://squiggles.tistory.com/38"});
+    blog.posts.push({"id": "post_37", "title": "관료주의 영어로?", "link": "https://squiggles.tistory.com/37"});
+    blog.posts.push({"id": "post_30", "title": "애간장을 태우다는 영어로?", "link": "https://squiggles.tistory.com/30"});
+    blog.posts.push({"id": "post_33", "title": "금사빠 영어로? 반하다 영어로? Emophilia?", "link": "https://squiggles.tistory.com/33"});
+    blog.posts.push({"id": "post_32", "title": "Ghosted, Ghosting 무슨 뜻? 고스팅의 뜻?", "link": "https://squiggles.tistory.com/32"});
+    blog.posts.push({"id": "post_29", "title": "어장관리는 영어로 어떻게? lead on의 뜻?", "link": "https://squiggles.tistory.com/29"});
+    blog.posts.push({"id": "post_31", "title": "애매한, 애매모호하다는 영어로 어떻게?", "link": "https://squiggles.tistory.com/31"});
+    blog.posts.push({"id": "post_28", "title": "튕기다 영어로? 밀당 영어표현?", "link": "https://squiggles.tistory.com/28"});
+    blog.posts.push({"id": "post_23", "title": "입사 후 포부는 영어로 어떻게?", "link": "https://squiggles.tistory.com/23"});
+    blog.posts.push({"id": "post_25", "title": "주식은 영어로? 주식 시장은? 주식 투자는?", "link": "https://squiggles.tistory.com/25"});
+    blog.posts.push({"id": "post_24", "title": "탄력받다, 추진력은 영어로? 모멘텀? Gain Momentum!", "link": "https://squiggles.tistory.com/24"});
+    blog.posts.push({"id": "post_26", "title": "통과 의례는 영어로? 인생의 관문은?", "link": "https://squiggles.tistory.com/26"});
+    blog.posts.push({"id": "post_27", "title": "들이대다, 대시하다는 영어로? Come on strong의 뜻?", "link": "https://squiggles.tistory.com/27"});
+    blog.posts.push({"id": "post_22", "title": "Red flag, 래드 플래그 무슨 뜻?", "link": "https://squiggles.tistory.com/22"});
+    blog.posts.push({"id": "post_19", "title": "Viral 뜻? \"유행\"은 영어로 어떻게?", "link": "https://squiggles.tistory.com/19"});
+    blog.posts.push({"id": "post_18", "title": "\"운세\", \"별자리 운세\"는 영어로 어떻게?", "link": "https://squiggles.tistory.com/18"});
+    blog.posts.push({"id": "post_20", "title": "계란 후라이 삶은 달걀 요리법은 영어로 어떻게?", "link": "https://squiggles.tistory.com/20"});
+    blog.posts.push({"id": "post_16", "title": "띠? \"무슨 띠예요?\" \"임인년\"은 영어로 어떻게?", "link": "https://squiggles.tistory.com/16"});
+    blog.posts.push({"id": "post_17", "title": "별자리? 내 별자리? 영어로는 어떻게 말하죠?", "link": "https://squiggles.tistory.com/17"});
+    blog.posts.push({"id": "post_21", "title": "터부, 금기는 영어로 어떻게?", "link": "https://squiggles.tistory.com/21"});
+    blog.posts.push({"id": "post_13", "title": "\"한 번만 봐줘!\" \"봐주다\"는 영어로?", "link": "https://squiggles.tistory.com/13"});
+    blog.posts.push({"id": "post_11", "title": "무궁화 꽃이 피었습니다! 영어로 어떻게?", "link": "https://squiggles.tistory.com/11"});
+    blog.posts.push({"id": "post_10", "title": "\"대충\", \"대충 하다\"는 영어로 어떻게?", "link": "https://squiggles.tistory.com/10"});
+    blog.posts.push({"id": "post_15", "title": "\"인정하다\" \"ㅇㅈ!\"은 원어민 영어로 어떻게?", "link": "https://squiggles.tistory.com/15"});
+    blog.posts.push({"id": "post_14", "title": "\"대세\"는 원어민 영어로 어떻게 표현하죠?", "link": "https://squiggles.tistory.com/14"});
+    blog.posts.push({"id": "post_12", "title": "\"술래\", \"술래 잡기놀이\"는 영어로 어떻게?", "link": "https://squiggles.tistory.com/12"});
+    blog.posts.push({"id": "post_3", "title": "예민한 친구! \"Sensitive\" 말고 영어로 뭐라 그러죠?", "link": "https://squiggles.tistory.com/3"});
+    blog.posts.push({"id": "post_6", "title": "\"한 입만~\" 영어로는?", "link": "https://squiggles.tistory.com/6"});
+    blog.posts.push({"id": "post_4", "title": "영어로 \"가는게 있어야 오는게 있지\"?", "link": "https://squiggles.tistory.com/4"});
+    blog.posts.push({"id": "post_9", "title": "잘난체하다, 잘난 척하다 영어로 어떻게? (\"Flex\" 말고!)", "link": "https://squiggles.tistory.com/9"});
+    blog.posts.push({"id": "post_7", "title": "Savage의 의미?", "link": "https://squiggles.tistory.com/7"});
+    blog.posts.push({"id": "post_5", "title": "\"좀 흥분되네~\" 😳 영어로는?!", "link": "https://squiggles.tistory.com/5"});
+    blog.posts.push({"id": "post_2", "title": "어쩌다 보니...는 영어로?", "link": "https://squiggles.tistory.com/2"});
+    blog.posts.push({"id": "post_1", "title": "키스마크를 영어로? 키스와 관련된 영어 표현들!", "link": "https://squiggles.tistory.com/1"});
+    window.blogsData.push(blog);
+})();
