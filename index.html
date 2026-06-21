@@ -84,12 +84,12 @@
         }
         #sync-status.show{ opacity:1; transform:translateX(-50%) translateY(0); }
 
-        /* 목록 화면 (블로그/글/검색결과 공용) */
+        /* 목록 화면 (블로그/글 공용) */
         #list-screen{
             flex:1 1 auto; min-height:0; overflow-y:auto;
             padding:14px; display:flex; flex-direction:column; gap:10px;
         }
-        .empty-state{margin:auto; text-align:center; color:var(--muted); padding:40px 20px;}
+        .empty-state{margin:auto; text-align:center; color:var(--muted); padding:40px 20px; line-height:1.6;}
 
         .row{
             display:flex; align-items:center; gap:12px; cursor:pointer;
@@ -111,6 +111,15 @@
         .row .edited{flex:0 0 auto; color:var(--accent); font-size:13px;}
         .row .chev{flex:0 0 auto; color:#c2c7cf; font-size:20px; line-height:1;}
         .delete-checkbox{flex:0 0 auto; width:18px; height:18px; display:none;}
+
+        /* 검색 결과 행: 제목/본문 매칭 구분 태그 */
+        .row .match-tag{
+            flex:0 0 auto; font-size:12px; font-weight:700;
+            padding:3px 9px; border-radius:999px; white-space:nowrap;
+        }
+        .row .match-tag.t-title{ background:rgba(59,130,246,.18); color:#2563eb; }
+        .row .match-tag.t-content{ background:#eef0f3; color:#6b7280; }
+        .row .match-tag.t-both{ background:rgba(168,85,247,.18); color:#7c3aed; }
 
         /* 편집(숨기기) 모드 */
         #list-screen.edit-mode .delete-checkbox{display:block;}
@@ -176,7 +185,7 @@
 
         <div id="sync-status"></div>
 
-        <!-- 블로그 목록 / 글 목록 / 검색결과 (같은 컨테이너 재사용) -->
+        <!-- 블로그 목록 / 글 목록 / 검색 결과 (같은 컨테이너 재사용) -->
         <main id="list-screen">
             <ul id="post-list" style="display:contents; list-style:none; margin:0; padding:0;"></ul>
         </main>
@@ -205,13 +214,21 @@
         const FIREBASE_URL = "https://blog-aaa78-default-rtdb.asia-southeast1.firebasedatabase.app/";
 
         let isEditMode = false;
-        let currentView = 'blogs';      // 'blogs' | 'posts' | 'reader' | 'search-ids' | 'search-posts'
+        let currentView = 'blogs';      // 'blogs' | 'posts' | 'reader' | 'searchBlogs' | 'searchPosts'
         let currentBlogId = null;
         let currentContentId = null;
         let currentContentUrl = null;
-        let currentVisiblePosts = [];   // 현재 블로그의 (숨김 제외) 글 목록 — 이전/다음 이동용
+        let currentVisiblePosts = [];   // 현재 화면의 (이전/다음 이동 대상) 글 목록
         let currentPostIndex = -1;
-        let currentSearchTerm = null;   // 검색을 거쳐 글을 읽는 중이면 검색어, 아니면 null
+
+        // ── 검색(찾기) 상태 ──
+        // searchData : { query, scope, matchesByBlog } — 진행 중인 검색 결과를 메모리에 보관
+        //   scope        : 'all'(첫화면=전체검색) | blogId(특정 ID 안에서만 검색)
+        //   matchesByBlog: { blogId: [ {postId, inTitle, inContent} ] }  (각 글의 매칭 위치)
+        let searchData = null;
+        let readerInSearch = false;     // 현재 읽고 있는 글이 "검색 결과로 들어간 글"인지
+        let searchToken = 0;            // 검색 경합 방지용 토큰 (느린 검색이 끝나도 최신 것만 반영)
+        let contentTextCache = {};      // 본문 텍스트 캐시: key = blogId + '|' + postId → 순수 텍스트(태그 제거)
 
         // Firebase에는 "변경분"만 저장:
         //   deleted_blogs / deleted_posts   → 숨김
@@ -221,10 +238,6 @@
         //   learned                         → 학습 완료 표시
         // 변경하지 않은 이름/제목/본문은 id/*.js(및 source/*.html) 원본을 사용.
         let dbData = { deleted_blogs: {}, deleted_posts: {}, content_overrides: {}, learned: {}, blog_name_overrides: {}, post_title_overrides: {} };
-
-        // 검색용 본문 텍스트 캐시: contentTextCache[blogId][postId] = "소문자로 변환된 순수 텍스트"
-        // 한 번 받아온 본문은 세션 동안 재요청하지 않음(재검색/이전·다음 이동 시 속도 위해)
-        let contentTextCache = {};
 
         document.addEventListener('DOMContentLoaded', async function() {
             await loadAllBlogDataFiles();
@@ -302,12 +315,13 @@
         function setScreen(view) {
             currentView = view;
             const isReader = (view === 'reader');
+            const isSearchList = (view === 'searchBlogs' || view === 'searchPosts');
+
             document.getElementById('list-screen').style.display   = isReader ? 'none' : 'flex';
             document.getElementById('reader-screen').style.display = isReader ? 'flex' : 'none';
             document.getElementById('back-btn').style.display      = (view === 'blogs') ? 'none' : 'inline-flex';
-            // 찾기/편집 버튼은 첫화면·글목록 화면에서만 노출 (검색결과 화면·본문 화면에서는 숨김)
-            const showListActions = (view === 'blogs' || view === 'posts');
-            document.getElementById('list-actions').style.display  = showListActions ? 'flex' : 'none';
+            // 검색 결과 목록 화면에서는 찾기/편집 액션을 숨김(읽기 전용 — 뒤로가기로 빠져나옴)
+            document.getElementById('list-actions').style.display  = (!isReader && !isSearchList) ? 'flex' : 'none';
             document.getElementById('reader-actions').style.display= isReader ? 'flex' : 'none';
 
             // 화면별 상단/하단바 색 — 단, 본문 화면에서 '학습 완료'한 글이면 위·아래 메뉴 색 모두 제거
@@ -316,12 +330,10 @@
                 const learned = isLearned(currentBlogId, currentContentId);
                 topbar.style.background = learned ? 'var(--card)' : 'rgba(250,204,21,.2)';
                 document.getElementById('reader-nav').style.background = learned ? 'var(--card)' : 'rgba(168,85,247,.2)';
-            } else if (view === 'blogs') {
-                topbar.style.background = 'rgba(239,68,68,.2)';
-            } else if (view === 'posts') {
-                topbar.style.background = 'rgba(59,130,246,.2)';
-            } else { // search-ids, search-posts
-                topbar.style.background = 'rgba(34,197,94,.2)';
+            } else if (isSearchList) {
+                topbar.style.background = 'rgba(168,85,247,.15)'; // 검색 결과 화면: 연보라 톤으로 구분
+            } else {
+                topbar.style.background = (view === 'blogs') ? 'rgba(239,68,68,.2)' : 'rgba(59,130,246,.2)';
             }
 
             // 첫 화면에서만 제목을 가운데 정렬하고 아이콘을 표시 (.home → CSS가 처리)
@@ -384,11 +396,13 @@
             if (checked) dbData.learned[blogId][postId] = true;
             else delete dbData.learned[blogId][postId];
             setScreen('reader'); // 체크 즉시 위·아래 메뉴 색 갱신
+            // 검색 모드에서는 setScreen('reader')가 제목을 바꾸지 않으므로 "검색어 : ..." 표시가 유지됨
             await updateFirebase(`learned/${blogId}/${postId}`, checked ? true : null); // null → RTDB에서 삭제
             setStatus("synced", "#2ecc71");
         }
 
         function renderBlogList() {
+            readerInSearch = false;
             setScreen('blogs');
             document.getElementById('title-text').innerText = 'Blog';
             updateEditButtons();
@@ -432,6 +446,7 @@
         }
 
         function renderPostList(blogId) {
+            readerInSearch = false;
             currentBlogId = blogId;
             const blog = window.blogsData.find(b => b.id === blogId);
             if (!blog) return;
@@ -478,163 +493,203 @@
                 history.pushState({ screen: 'posts', blogId: id }, '');
                 renderPostList(id);
             } else {
+                readerInSearch = false; // 일반 목록에서 들어가는 글 → 검색 모드 아님
                 history.pushState({ screen: 'reader', blogId: currentBlogId, postId: id }, '');
                 loadContent(currentBlogId, id);
             }
         }
 
-        // ── 검색 ──
-        // HTML 본문에서 순수 텍스트만 추출 (script/style 내용은 검색에서 제외)
-        function htmlToPlainText(html) {
-            const div = document.createElement('div');
-            div.innerHTML = html;
-            div.querySelectorAll('script, style').forEach(el => el.remove());
-            return div.textContent || '';
+        // ─────────────────────────────────────────────────────────────
+        //  찾기(검색) 기능
+        // ─────────────────────────────────────────────────────────────
+        // HTML → 순수 텍스트(태그 제거). DOMParser로 만든 문서는 비활성(inert)이라
+        // 이미지/스크립트 등 외부 리소스를 불러오지 않으므로 검색용으로 안전.
+        function htmlToText(html) {
+            if (!html) return '';
+            try {
+                const doc = new DOMParser().parseFromString(html, 'text/html');
+                doc.querySelectorAll('script,style').forEach(el => el.remove());
+                return doc.body ? (doc.body.textContent || '') : '';
+            } catch (e) {
+                return String(html).replace(/<[^>]*>/g, ' '); // 폴백: 대충 태그만 제거
+            }
         }
 
-        // 글 본문의 검색용 텍스트(소문자)를 가져옴. content_overrides가 있으면 그걸, 없으면 source/*.html을 fetch.
-        // 한 번 받아온 결과는 contentTextCache에 저장해서 재검색·이전/다음 이동 시 재요청하지 않음.
-        async function getPostPlainText(blogId, postId) {
-            if (contentTextCache[blogId] && contentTextCache[blogId][postId] !== undefined) {
-                return contentTextCache[blogId][postId];
-            }
+        // 한 글의 본문 텍스트를 가져온다(편집본 우선 → 없으면 source 원본 fetch). 1회 받으면 캐시.
+        async function getPostText(blogId, postId) {
+            const key = blogId + '|' + postId;
+            if (contentTextCache[key] !== undefined) return contentTextCache[key];
+
             let html = dbData.content_overrides[blogId] && dbData.content_overrides[blogId][postId];
             if (!html) {
                 try {
-                    const res = await fetch(`source/${blogId}/${postId}.html`);
+                    const res = await fetch('source/' + blogId + '/' + postId + '.html');
                     if (!res.ok) throw new Error('fetch failed');
                     html = await res.text();
-                } catch (err) {
-                    html = '';
+                } catch (e) {
+                    html = ''; // 못 불러오면 본문은 빈 것으로 간주(제목 검색은 그대로 됨)
                 }
             }
-            const text = htmlToPlainText(html).toLowerCase();
-            if (!contentTextCache[blogId]) contentTextCache[blogId] = {};
-            contentTextCache[blogId][postId] = text;
+            const text = htmlToText(html);
+            contentTextCache[key] = text;
             return text;
         }
 
-        // 특정 블로그 안에서 검색어가 포함된 글 목록 반환: [{ blogId, post, matchType: 'title'|'content' }, ...]
-        // (제목 검색은 즉시, 본문 검색은 제목에 안 걸린 글만 fetch해서 확인 — 불필요한 요청 절약)
-        async function searchPostsInBlog(blogId, termLower) {
-            const blog = window.blogsData.find(b => b.id === blogId);
-            if (!blog) return [];
-            const visible = getVisiblePosts(blogId);
-            const checks = await Promise.all(visible.map(async post => {
-                const title = getPostTitle(blogId, post).toLowerCase();
-                if (title.includes(termLower)) {
-                    return { blogId, post, matchType: 'title' };
-                }
-                const text = await getPostPlainText(blogId, post.id);
-                if (text.includes(termLower)) {
-                    return { blogId, post, matchType: 'content' };
-                }
-                return null;
-            }));
-            return checks.filter(Boolean);
-        }
+        // 검색 실행: 범위 내 모든 (숨김 제외) 글의 제목·본문에서 검색어를 찾는다.
+        //   반환: matchesByBlog = { blogId: [ {postId, inTitle, inContent} ] }  (최신 글이 위로 정렬)
+        async function performSearch(query, scope) {
+            const q = query.toLowerCase();
+            const matchesByBlog = {};
 
-        // 전체 블로그(숨김 제외) 중 검색어가 포함된 글이 하나라도 있는 블로그 목록 반환
-        async function searchAllBlogs(termLower) {
-            const visibleBlogs = window.blogsData
-                .filter(b => !dbData.deleted_blogs[b.id])
-                .sort((a, b) => compareId(a.id, b.id));
-            const results = await Promise.all(visibleBlogs.map(async blog => {
-                const matches = await searchPostsInBlog(blog.id, termLower);
-                return matches.length > 0 ? { blogId: blog.id, blogName: getBlogName(blog), matchCount: matches.length } : null;
-            }));
-            return results.filter(Boolean);
-        }
-
-        // 찾기 버튼: 첫화면이면 전체검색, 글목록 화면이면 그 블로그 안에서만 검색
-        function startSearch() {
-            const term = prompt('검색어를 입력하세요:');
-            if (term === null) return;
-            const trimmed = term.trim();
-            if (!trimmed) return;
-
-            if (currentView === 'blogs') {
-                history.pushState({ screen: 'search-ids', term: trimmed }, '');
-                renderSearchIds(trimmed);
-            } else if (currentView === 'posts') {
-                history.pushState({ screen: 'search-posts', term: trimmed, blogId: currentBlogId }, '');
-                renderSearchPosts(currentBlogId, trimmed);
+            let blogsToSearch;
+            if (scope === 'all') {
+                blogsToSearch = window.blogsData.filter(b => !dbData.deleted_blogs[b.id]);
+            } else {
+                const b = window.blogsData.find(x => x.id === scope);
+                blogsToSearch = b ? [b] : [];
             }
+
+            // 검사할 (블로그, 글) 쌍을 모은 뒤 병렬로 본문을 받아 검색
+            const tasks = [];
+            blogsToSearch.forEach(blog => {
+                const deleted = dbData.deleted_posts[blog.id] || {};
+                blog.posts.filter(p => !deleted[p.id]).forEach(post => tasks.push({ blog, post }));
+            });
+
+            await Promise.all(tasks.map(async ({ blog, post }) => {
+                const title = (getPostTitle(blog.id, post) || '').toLowerCase();
+                const inTitle = title.includes(q);
+                const text = await getPostText(blog.id, post.id);
+                const inContent = text.toLowerCase().includes(q);
+                if (inTitle || inContent) {
+                    if (!matchesByBlog[blog.id]) matchesByBlog[blog.id] = [];
+                    matchesByBlog[blog.id].push({ postId: post.id, inTitle, inContent });
+                }
+            }));
+
+            // 각 블로그 내 매칭 글을 최신순(id 내림차순)으로 정렬
+            Object.keys(matchesByBlog).forEach(bid => {
+                matchesByBlog[bid].sort((a, b) => compareId(b.postId, a.postId));
+            });
+            return matchesByBlog;
         }
 
-        // 첫화면 검색 결과: 검색어가 포함된 글이 있는 블로그(ID) 목록
-        async function renderSearchIds(term) {
-            currentSearchTerm = term;
-            setScreen('search-ids');
-            document.getElementById('title-text').innerText = '검색어 : ' + term;
+        // "찾기" 버튼: 현재 화면에 따라 검색 범위 결정 → 입력창 → 검색 → 결과 표시
+        async function startSearch() {
+            const scope = (currentView === 'blogs') ? 'all' : currentBlogId; // 첫화면=전체, 글목록=그 ID만
+            const promptMsg = (scope === 'all')
+                ? '전체 블로그의 제목·본문에서 찾기\n\n검색어를 입력하세요:'
+                : '이 블로그의 제목·본문에서 찾기\n\n검색어를 입력하세요:';
+            const query = (prompt(promptMsg) || '').trim();
+            if (!query) return;
+
+            isEditMode = false;
+            const token = ++searchToken;          // 이 검색의 고유 번호
+            searchData = { query: query, scope: scope, matchesByBlog: {} };
+
+            // 결과 화면을 먼저 띄우고(로딩 표시), 검색이 끝나면 채운다
+            if (scope === 'all') {
+                history.pushState({ screen: 'searchBlogs', query: query }, '');
+                showSearchLoading('searchBlogs', query);
+            } else {
+                history.pushState({ screen: 'searchPosts', blogId: scope, query: query }, '');
+                showSearchLoading('searchPosts', query);
+            }
+
+            const matches = await performSearch(query, scope);
+            if (token !== searchToken) return;    // 그 사이 다른 검색/뒤로가기가 있었으면 무시
+            searchData.matchesByBlog = matches;
+
+            if (scope === 'all') renderSearchBlogList();
+            else                 renderSearchPostList(scope);
+        }
+
+        // 검색 중 로딩 표시
+        function showSearchLoading(view, query) {
+            readerInSearch = false;
+            setScreen(view);
+            document.getElementById('title-text').innerText = '검색 결과 : ' + query;
+            document.getElementById('post-list').innerHTML =
+                '<div class="empty-state">🔍 “' + escapeHtml(query) + '” 검색 중…</div>';
+        }
+
+        // [전체검색] 검색어가 들어있는 블로그(ID) 목록
+        function renderSearchBlogList() {
+            readerInSearch = false;
+            setScreen('searchBlogs');
+            document.getElementById('title-text').innerText = '검색 결과 : ' + searchData.query;
 
             const listEl = document.getElementById('post-list');
-            listEl.innerHTML = '<div class="empty-state">검색 중...</div>';
-
-            const matched = await searchAllBlogs(term.toLowerCase());
-
-            // 검색 중 다른 화면/다른 검색으로 이동했으면 결과를 버림(경합 방지)
-            if (currentView !== 'search-ids' || currentSearchTerm !== term) return;
-
             listEl.innerHTML = '';
-            if (matched.length === 0) {
-                listEl.innerHTML = '<div class="empty-state">검색 결과가 없어요.</div>';
+
+            const blogIds = Object.keys(searchData.matchesByBlog).sort((a, b) => compareId(a, b)); // ID 오름차순
+            if (blogIds.length === 0) {
+                listEl.innerHTML = '<div class="empty-state">“' + escapeHtml(searchData.query) + '” 에 대한<br>검색 결과가 없어요.</div>';
                 return;
             }
-            matched.forEach(m => {
+
+            blogIds.forEach(blogId => {
+                const blog = window.blogsData.find(b => b.id === blogId);
+                if (!blog) return;
+                const cnt = searchData.matchesByBlog[blogId].length;
                 const li = document.createElement('li');
                 li.className = 'row blog';
+                li.setAttribute('onclick', `onSearchBlogClick('${blogId}')`);
                 li.innerHTML =
-                    "<span class='name'></span>" +
-                    "<span class='count'>" + m.matchCount + "건</span>" +
+                    "<span class='name'>" + escapeHtml(getBlogName(blog)) + "</span>" +
+                    "<span class='count'>" + cnt + "</span>" +
                     "<span class='chev'>›</span>";
-                li.querySelector('.name').textContent = m.blogName;
-                li.addEventListener('click', () => onSearchIdClick(m.blogId, term));
                 listEl.appendChild(li);
             });
         }
 
-        function onSearchIdClick(blogId, term) {
-            history.pushState({ screen: 'search-posts', term, blogId }, '');
-            renderSearchPosts(blogId, term);
+        // [전체검색] 블로그 클릭 → 그 블로그의 매칭 글 목록으로
+        function onSearchBlogClick(blogId) {
+            history.pushState({ screen: 'searchPosts', blogId: blogId, query: searchData.query }, '');
+            renderSearchPostList(blogId);
         }
 
-        // 특정 블로그 안 검색 결과: 검색어가 포함된 글 목록 (제목/본문 구분 표시)
-        async function renderSearchPosts(blogId, term) {
+        // 검색어가 들어있는 글 목록 (제목/본문 매칭 구분 태그 표시)
+        function renderSearchPostList(blogId) {
+            readerInSearch = false;
             currentBlogId = blogId;
-            currentSearchTerm = term;
-            setScreen('search-posts');
-            document.getElementById('title-text').innerText = '검색어 : ' + term;
+            setScreen('searchPosts');
+            document.getElementById('title-text').innerText = '검색 결과 : ' + searchData.query;
 
+            const blog = window.blogsData.find(b => b.id === blogId);
             const listEl = document.getElementById('post-list');
-            listEl.innerHTML = '<div class="empty-state">검색 중...</div>';
-
-            const matches = await searchPostsInBlog(blogId, term.toLowerCase());
-
-            if (currentView !== 'search-posts' || currentSearchTerm !== term || currentBlogId !== blogId) return;
-
             listEl.innerHTML = '';
-            if (matches.length === 0) {
-                listEl.innerHTML = '<div class="empty-state">검색 결과가 없어요.</div>';
+
+            const matches = searchData.matchesByBlog[blogId] || [];
+            if (!blog || matches.length === 0) {
+                listEl.innerHTML = '<div class="empty-state">“' + escapeHtml(searchData.query) + '” 에 대한<br>검색 결과가 없어요.</div>';
                 return;
             }
+
             matches.forEach(m => {
+                const post = blog.posts.find(p => p.id === m.postId);
+                if (!post) return;
+                let label, cls;
+                if (m.inTitle && m.inContent) { label = '제목·본문'; cls = 't-both'; }
+                else if (m.inTitle)           { label = '제목';      cls = 't-title'; }
+                else                          { label = '본문';      cls = 't-content'; }
+
                 const li = document.createElement('li');
-                li.className = isLearned(blogId, m.post.id) ? 'row' : 'row post';
-                const label = m.matchType === 'title' ? '[제목]' : '[본문]';
+                li.className = 'row post';
+                li.setAttribute('onclick', `onSearchPostClick('${blogId}','${m.postId}')`);
                 li.innerHTML =
-                    "<span class='name'></span>" +
-                    "<span class='count'>" + label + "</span>" +
+                    "<span class='name'>" + escapeHtml(getPostTitle(blogId, post)) + "</span>" +
+                    "<span class='match-tag " + cls + "'>" + label + "</span>" +
                     "<span class='chev'>›</span>";
-                li.querySelector('.name').textContent = getPostTitle(blogId, m.post);
-                li.addEventListener('click', () => onSearchPostClick(blogId, m.post.id, term));
                 listEl.appendChild(li);
             });
         }
 
-        function onSearchPostClick(blogId, postId, term) {
-            history.pushState({ screen: 'reader', blogId, postId, searchTerm: term }, '');
-            loadContent(blogId, postId, { term });
+        // 검색 결과 글 클릭 → 본문(검색 모드)으로
+        function onSearchPostClick(blogId, postId) {
+            history.pushState({ screen: 'searchReader', blogId: blogId, postId: postId, query: searchData.query }, '');
+            readerInSearch = true;
+            loadContent(blogId, postId);
         }
 
         // ── 본문 가공 파이프라인 ──
@@ -696,35 +751,39 @@
             frame.srcdoc = processContentHtml(html);
         }
 
-        // searchCtx: { term } — 검색을 거쳐 들어온 경우 전달. 이 경우 이전/다음 이동 범위가
-        // "해당 블로그 안에서 검색어가 포함된 글들"로 제한되고, 제목 자리에 "검색어 : ..."가 표시됨.
-        async function loadContent(blogId, postId, searchCtx) {
+        function loadContent(blogId, postId) {
             const blog = window.blogsData.find(b => b.id === blogId);
             if (!blog) return;
 
-            let visible, idx;
-            if (searchCtx && searchCtx.term) {
-                visible = (await searchPostsInBlog(blogId, searchCtx.term.toLowerCase())).map(m => m.post);
-                idx = visible.findIndex(p => p.id === postId);
-                currentSearchTerm = searchCtx.term;
+            // 이전/다음 이동 대상 목록:
+            //   - 검색 모드면 "그 블로그의 매칭 글들" 안에서만 이동
+            //   - 아니면 평소처럼 "보이는 전체 글" 안에서 이동
+            let navList;
+            if (readerInSearch && searchData && searchData.matchesByBlog[blogId]) {
+                navList = searchData.matchesByBlog[blogId]
+                    .map(m => blog.posts.find(p => p.id === m.postId))
+                    .filter(Boolean);
             } else {
-                visible = getVisiblePosts(blogId);
-                idx = visible.findIndex(p => p.id === postId);
-                currentSearchTerm = null;
+                navList = getVisiblePosts(blogId);
             }
-            const post = visible[idx] || blog.posts.find(p => p.id === postId);
+
+            const idx = navList.findIndex(p => p.id === postId);
+            const post = navList[idx] || blog.posts.find(p => p.id === postId);
             if (!post) return;
 
             currentBlogId = blogId;
             currentContentId = postId;
             currentContentUrl = 'source/' + blogId + '/' + postId + '.html';
-            currentVisiblePosts = visible;
+            currentVisiblePosts = navList;
             currentPostIndex = idx;
 
             setScreen('reader');
-            document.getElementById('title-text').innerText = currentSearchTerm
-                ? ('검색어 : ' + currentSearchTerm)
-                : getPostTitle(blogId, post);
+            // 제목: 검색으로 들어온 글이면 "검색어 : OOOO", 아니면 평소처럼 글 제목
+            if (readerInSearch && searchData) {
+                document.getElementById('title-text').innerText = '검색어 : ' + searchData.query;
+            } else {
+                document.getElementById('title-text').innerText = getPostTitle(blogId, post);
+            }
             document.getElementById('header-link').href = post.link || '#';
 
             // 본문 편집 UI 초기화
@@ -751,10 +810,11 @@
             const t = currentPostIndex + delta;
             if (t < 0 || t >= currentVisiblePosts.length) return;
             const id = currentVisiblePosts[t].id;
-            const searchCtx = currentSearchTerm ? { term: currentSearchTerm } : null;
-            // 이전/다음은 히스토리 교체(쌓지 않음). 검색 중이면 searchTerm도 같이 기록.
-            history.replaceState({ screen: 'reader', blogId: currentBlogId, postId: id, searchTerm: currentSearchTerm || undefined }, '');
-            loadContent(currentBlogId, id, searchCtx);
+            const screen = readerInSearch ? 'searchReader' : 'reader';
+            const st = { screen: screen, blogId: currentBlogId, postId: id };
+            if (readerInSearch && searchData) st.query = searchData.query;
+            history.replaceState(st, ''); // 이전/다음은 히스토리 교체(쌓지 않음)
+            loadContent(currentBlogId, id);
         }
 
         async function toggleContentEdit() {
@@ -794,10 +854,7 @@
 
             if (!dbData.content_overrides[currentBlogId]) dbData.content_overrides[currentBlogId] = {};
             dbData.content_overrides[currentBlogId][currentContentId] = newHtml;
-
-            // 본문이 바뀌었으니 검색용 캐시도 갱신(다음 검색부터 최신 내용 반영)
-            if (!contentTextCache[currentBlogId]) contentTextCache[currentBlogId] = {};
-            contentTextCache[currentBlogId][currentContentId] = htmlToPlainText(newHtml).toLowerCase();
+            delete contentTextCache[currentBlogId + '|' + currentContentId]; // 편집했으니 본문 검색 캐시 무효화
 
             await updateFirebase(`content_overrides/${currentBlogId}/${currentContentId}`, newHtml);
             setStatus("✅ 클라우드 저장 완료", "#2ecc71");
@@ -895,8 +952,8 @@
         function updateEditButtons() {
             document.getElementById('list-screen').classList.toggle('edit-mode', isEditMode);
             document.getElementById('delete-btn').style.display = isEditMode ? 'inline-flex' : 'none';
+            document.getElementById('search-btn').style.display = isEditMode ? 'none' : 'inline-flex'; // 편집 중엔 찾기 숨김
             document.getElementById('edit-btn').innerText = isEditMode ? '완료' : '편집';
-            document.getElementById('search-btn').style.display = isEditMode ? 'none' : 'inline-flex';
         }
 
         async function deleteSelected() {
@@ -926,26 +983,33 @@
         function applyState(s) {
             isEditMode = false; // 화면 이동 시 편집 모드 해제
             const screen = s && s.screen;
-            if (screen === 'posts') renderPostList(s.blogId);
-            else if (screen === 'reader') {
-                const searchCtx = s.searchTerm ? { term: s.searchTerm } : null;
-                loadContent(s.blogId, s.postId, searchCtx);
+            if (screen === 'posts') { readerInSearch = false; renderPostList(s.blogId); }
+            else if (screen === 'reader') { readerInSearch = false; loadContent(s.blogId, s.postId); }
+            // 검색 화면들: searchData가 있어야 복원 가능(없으면=새로고침 등 → 첫 화면으로 안전 복귀)
+            else if (screen === 'searchBlogs') { searchData ? renderSearchBlogList() : renderBlogList(); }
+            else if (screen === 'searchPosts') { searchData ? renderSearchPostList(s.blogId) : renderBlogList(); }
+            else if (screen === 'searchReader') {
+                if (searchData) { readerInSearch = true; loadContent(s.blogId, s.postId); }
+                else renderBlogList();
             }
-            else if (screen === 'search-ids') renderSearchIds(s.term);
-            else if (screen === 'search-posts') renderSearchPosts(s.blogId, s.term);
-            else renderBlogList();
+            else { readerInSearch = false; renderBlogList(); }
         }
 
         // 화면 안 ‹ 버튼: 브라우저 뒤로가기와 동일하게 동작
         function goBack() { history.back(); }
 
         window.addEventListener('popstate', function (e) {
+            searchToken++; // 진행 중이던 검색이 있으면 무효화(뒤로/앞으로로 이미 화면이 바뀌므로)
+
             // 본문 편집 중이면 편집만 닫고 현재 화면 유지(미저장 내용 보호)
             const editing = currentView === 'reader' &&
                 document.getElementById('content-save-btn').style.display !== 'none';
             if (editing) {
                 cancelContentEdit();
-                history.pushState({ screen: 'reader', blogId: currentBlogId, postId: currentContentId }, '');
+                const screen = (readerInSearch && searchData) ? 'searchReader' : 'reader';
+                const st = { screen: screen, blogId: currentBlogId, postId: currentContentId };
+                if (readerInSearch && searchData) st.query = searchData.query;
+                history.pushState(st, '');
                 return;
             }
             const s = e.state;
@@ -959,7 +1023,7 @@
             }
         });
 
-        // ponytail self-check: 읽기 스타일 주입 위치 + 정렬 + override 우선순위 + 검색 텍스트 추출을 1회 검증(실패 시에만 콘솔 경고)
+        // ponytail self-check: 읽기 스타일 주입 위치 + 정렬 + override 우선순위 + 텍스트추출을 1회 검증(실패 시에만 콘솔 경고)
         (function () {
             const withHead = injectReadingStyle("<html><head><meta charset='utf-8'></head><body>x</body></html>");
             console.assert(/<head[^>]*>\s*<style id='reader-base'/i.test(withHead), "injectReadingStyle: <head> 케이스 위치 오류");
@@ -974,9 +1038,9 @@
             console.assert(getBlogName({ id: "__t", name: "base" }) === "수정", "getBlogName: override 있을 때 우선");
             delete dbData.blog_name_overrides["__t"];
             console.assert(getPostTitle("__b", { id: "__p", title: "원제목" }) === "원제목", "getPostTitle: override 없을 때 원본 사용");
-            // 검색 텍스트 추출 검증 (script/style 제외, 태그 제거)
-            const plain = htmlToPlainText("<html><head><style>.x{color:red}</style></head><body><script>var a=1;</script><p>Hello 안녕</p></body></html>");
-            console.assert(plain.includes("Hello") && plain.includes("안녕") && !plain.includes("color:red") && !plain.includes("var a"), "htmlToPlainText: 추출 오류");
+            // 본문 텍스트 추출 검증(검색 대상)
+            console.assert(htmlToText("<p>hello <b>world</b></p>").replace(/\s+/g,' ').trim() === "hello world", "htmlToText: 태그 제거 오류");
+            console.assert(htmlToText("<div>한글<span>검색</span></div>").indexOf("한글검색") !== -1, "htmlToText: 한글 추출 오류");
         })();
     </script>
 </body>
