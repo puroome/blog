@@ -116,6 +116,13 @@
         #list-screen.edit-mode .delete-checkbox{display:block;}
         #list-screen.edit-mode .row{cursor:default;}
         #list-screen.edit-mode .row:hover{transform:none; box-shadow:none;}
+        /* 편집 모드: 이름/제목을 클릭해 직접 수정 (노란 칸이 편집 가능 표시) */
+        #list-screen.edit-mode .row .name{
+            white-space:normal; overflow:visible; text-overflow:clip;
+            cursor:text; background:var(--edit); border:1px solid #f0e6b8;
+            border-radius:6px; padding:5px 8px; margin:-1px 0;
+        }
+        #list-screen.edit-mode .row .name:focus{ outline:2px solid var(--accent); outline-offset:0; }
 
         /* 본문 읽기 화면 */
         #reader-screen{
@@ -204,7 +211,14 @@
         let currentVisiblePosts = [];   // 현재 블로그의 (숨김 제외) 글 목록 — 이전/다음 이동용
         let currentPostIndex = -1;
 
-        let dbData = { deleted_blogs: {}, deleted_posts: {}, content_overrides: {}, learned: {} };
+        // Firebase에는 "변경분"만 저장:
+        //   deleted_blogs / deleted_posts   → 숨김
+        //   content_overrides               → 편집한 본문
+        //   blog_name_overrides             → 편집한 블로그 이름
+        //   post_title_overrides            → 편집한 글 제목
+        //   learned                         → 학습 완료 표시
+        // 변경하지 않은 이름/제목/본문은 id/*.js(및 source/*.html) 원본을 사용.
+        let dbData = { deleted_blogs: {}, deleted_posts: {}, content_overrides: {}, learned: {}, blog_name_overrides: {}, post_title_overrides: {} };
 
         document.addEventListener('DOMContentLoaded', async function() {
             await loadAllBlogDataFiles();
@@ -247,6 +261,8 @@
                 dbData.deleted_posts = data.deleted_posts || {};
                 dbData.content_overrides = data.content_overrides || {};
                 dbData.learned = data.learned || {};
+                dbData.blog_name_overrides = data.blog_name_overrides || {};
+                dbData.post_title_overrides = data.post_title_overrides || {};
                 setStatus("synced", "#2ecc71");
             } catch (err) {
                 console.error("Firebase 로드 오류", err);
@@ -327,6 +343,16 @@
                 .sort((a, b) => compareId(b.id, a.id)); // 큰 id(최신) 먼저 → 내림차순
         }
 
+        // 편집된 이름/제목이 있으면 그것을, 없으면 id/*.js의 원본을 사용
+        function getBlogName(blog) {
+            const ov = dbData.blog_name_overrides[blog.id];
+            return (ov !== undefined && ov !== null && ov !== '') ? ov : blog.name;
+        }
+        function getPostTitle(blogId, post) {
+            const ov = dbData.post_title_overrides[blogId] && dbData.post_title_overrides[blogId][post.id];
+            return (ov !== undefined && ov !== null && ov !== '') ? ov : post.title;
+        }
+
         // 학습 여부
         function isLearned(blogId, postId) {
             return !!(dbData.learned[blogId] && dbData.learned[blogId][postId]);
@@ -352,7 +378,6 @@
         }
 
         function renderBlogList() {
-            isEditMode = false;
             setScreen('blogs');
             document.getElementById('title-text').innerText = 'English Blog';
             updateEditButtons();
@@ -371,12 +396,16 @@
             visibleBlogs.forEach(blog => {
                 const deletedCount = dbData.deleted_posts[blog.id] ? Object.keys(dbData.deleted_posts[blog.id]).length : 0;
                 const remaining = blog.posts.length - deletedCount;
+                // 편집 모드일 때만 이름을 직접 수정 가능하게(클릭=편집, 행 클릭과 충돌 방지 위해 stopPropagation)
+                const nameAttrs = isEditMode
+                    ? " contenteditable='true' onclick='event.stopPropagation()' onkeydown='nameKeydown(event)' onblur='saveBlogName(\"" + blog.id + "\", this)'"
+                    : "";
                 const li = document.createElement('li');
                 li.className = isBlogFullyLearned(blog.id) ? 'row' : 'row blog'; // 전부 학습 완료면 파란색 제거
                 li.setAttribute('onclick', `onRowClick('blog','${blog.id}', this)`);
                 li.innerHTML =
                     "<input type='checkbox' class='delete-checkbox' value='" + blog.id + "' onclick='event.stopPropagation()'>" +
-                    "<span class='name'>" + escapeHtml(blog.name) + "</span>" +
+                    "<span class='name'" + nameAttrs + ">" + escapeHtml(getBlogName(blog)) + "</span>" +
                     "<span class='count'>" + remaining + "</span>" +
                     "<span class='chev'>›</span>";
                 listEl.appendChild(li);
@@ -384,13 +413,12 @@
         }
 
         function renderPostList(blogId) {
-            isEditMode = false;
             currentBlogId = blogId;
             const blog = window.blogsData.find(b => b.id === blogId);
             if (!blog) return;
 
             setScreen('posts');
-            document.getElementById('title-text').innerText = blog.name;
+            document.getElementById('title-text').innerText = getBlogName(blog);
             updateEditButtons();
 
             const listEl = document.getElementById('post-list');
@@ -404,12 +432,16 @@
 
             visiblePosts.forEach(post => {
                 const edited = (dbData.content_overrides[blogId] && dbData.content_overrides[blogId][post.id]) ? "<span class='edited'>✏️</span>" : "";
+                // 편집 모드일 때만 제목을 직접 수정 가능하게
+                const nameAttrs = isEditMode
+                    ? " contenteditable='true' onclick='event.stopPropagation()' onkeydown='nameKeydown(event)' onblur='savePostTitle(\"" + blogId + "\", \"" + post.id + "\", this)'"
+                    : "";
                 const li = document.createElement('li');
                 li.className = isLearned(blogId, post.id) ? 'row' : 'row post'; // 학습 완료면 노란색 제거
                 li.setAttribute('onclick', `onRowClick('post','${post.id}', this)`);
                 li.innerHTML =
                     "<input type='checkbox' class='delete-checkbox' value='" + post.id + "' onclick='event.stopPropagation()'>" +
-                    "<span class='name'>" + escapeHtml(post.title) + "</span>" +
+                    "<span class='name'" + nameAttrs + ">" + escapeHtml(getPostTitle(blogId, post)) + "</span>" +
                     edited +
                     "<span class='chev'>›</span>";
                 listEl.appendChild(li);
@@ -506,7 +538,7 @@
             currentPostIndex = idx;
 
             setScreen('reader');
-            document.getElementById('title-text').innerText = post.title;
+            document.getElementById('title-text').innerText = getPostTitle(blogId, post);
             document.getElementById('header-link').href = post.link || '#';
 
             // 본문 편집 UI 초기화
@@ -598,9 +630,74 @@
             renderContentToFrame(); // 저장한 편집본으로 다시 렌더
         }
 
+        // Enter 키로 편집 종료(줄바꿈 대신 저장 처리)
+        function nameKeydown(e) {
+            if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); }
+        }
+
+        // 블로그 이름 저장:
+        //   - 비우거나 원본과 같으면 → override 제거(= id/*.js 값으로 복귀)
+        //   - 다르면 → Firebase(blog_name_overrides)에 저장
+        async function saveBlogName(blogId, el) {
+            const blog = window.blogsData.find(b => b.id === blogId);
+            if (!blog) return;
+            const newName = el.textContent.trim();
+            const original = blog.name;
+            const currentOverride = dbData.blog_name_overrides[blogId];
+
+            if (newName === '' || newName === original) {
+                if (currentOverride !== undefined && currentOverride !== null) {
+                    delete dbData.blog_name_overrides[blogId];
+                    setStatus("☁️ 이름 복원 중...", "#2ecc71");
+                    await updateFirebase(`blog_name_overrides/${blogId}`, null); // null → RTDB에서 삭제
+                    setStatus("synced", "#2ecc71");
+                }
+                if (newName === '') el.textContent = original; // 빈 값이면 화면을 원래 이름으로 되돌림
+                return;
+            }
+            if (newName === currentOverride) return; // 변경 없음
+
+            dbData.blog_name_overrides[blogId] = newName;
+            setStatus("☁️ 이름 저장 중...", "#2ecc71");
+            await updateFirebase(`blog_name_overrides/${blogId}`, newName);
+            setStatus("✅ 저장 완료", "#2ecc71");
+        }
+
+        // 글 제목 저장: 위와 동일한 규칙 (post_title_overrides)
+        async function savePostTitle(blogId, postId, el) {
+            const blog = window.blogsData.find(b => b.id === blogId);
+            if (!blog) return;
+            const post = blog.posts.find(p => p.id === postId);
+            if (!post) return;
+            const newTitle = el.textContent.trim();
+            const original = post.title;
+            const currentOverride = dbData.post_title_overrides[blogId] && dbData.post_title_overrides[blogId][postId];
+
+            if (newTitle === '' || newTitle === original) {
+                if (currentOverride !== undefined && currentOverride !== null) {
+                    if (dbData.post_title_overrides[blogId]) delete dbData.post_title_overrides[blogId][postId];
+                    setStatus("☁️ 제목 복원 중...", "#2ecc71");
+                    await updateFirebase(`post_title_overrides/${blogId}/${postId}`, null);
+                    setStatus("synced", "#2ecc71");
+                }
+                if (newTitle === '') el.textContent = original;
+                return;
+            }
+            if (newTitle === currentOverride) return;
+
+            if (!dbData.post_title_overrides[blogId]) dbData.post_title_overrides[blogId] = {};
+            dbData.post_title_overrides[blogId][postId] = newTitle;
+            setStatus("☁️ 제목 저장 중...", "#2ecc71");
+            await updateFirebase(`post_title_overrides/${blogId}/${postId}`, newTitle);
+            setStatus("✅ 저장 완료", "#2ecc71");
+        }
+
         function toggleEditMode() {
             isEditMode = !isEditMode;
-            updateEditButtons();
+            // 편집 모드 진입/해제 시 목록을 다시 그려 이름/제목 편집 가능 상태를 반영
+            if (currentView === 'blogs') renderBlogList();
+            else if (currentView === 'posts') renderPostList(currentBlogId);
+            else updateEditButtons();
         }
 
         function updateEditButtons() {
@@ -611,6 +708,7 @@
 
         async function deleteSelected() {
             const checked = document.querySelectorAll('.delete-checkbox:checked');
+            isEditMode = false; // 숨기기 후엔 편집 모드 종료(기존 동작 유지)
             setStatus("☁️ 클라우드 동기화 중...", "#2ecc71");
 
             if (currentView === 'blogs') {
@@ -633,6 +731,7 @@
         // ── 히스토리 기반 화면 이동 (브라우저 뒤로/앞으로 버튼 지원) ──
         // 각 화면을 히스토리 항목으로 저장 → 뒤로/앞으로가 화면 이동으로 동작.
         function applyState(s) {
+            isEditMode = false; // 화면 이동 시 편집 모드 해제
             const screen = s && s.screen;
             if (screen === 'posts') renderPostList(s.blogId);
             else if (screen === 'reader') loadContent(s.blogId, s.postId);
@@ -654,6 +753,7 @@
             const s = e.state;
             if (!s || s.guard) {
                 // 첫 화면 아래(앱 밖)로 가려 함 → 막고 첫 화면 유지
+                isEditMode = false;
                 renderBlogList();
                 history.pushState({ screen: 'blogs' }, '');
             } else {
@@ -661,7 +761,7 @@
             }
         });
 
-        // ponytail self-check: 읽기 스타일이 올바른 위치에 주입되는지 1회 검증(실패 시에만 콘솔 경고)
+        // ponytail self-check: 읽기 스타일 주입 위치 + 정렬 + override 우선순위를 1회 검증(실패 시에만 콘솔 경고)
         (function () {
             const withHead = injectReadingStyle("<html><head><meta charset='utf-8'></head><body>x</body></html>");
             console.assert(/<head[^>]*>\s*<style id='reader-base'/i.test(withHead), "injectReadingStyle: <head> 케이스 위치 오류");
@@ -670,6 +770,12 @@
             // 정렬 검증
             console.assert(["100","20","3"].sort((a,b)=>compareId(b,a)).join() === "100,20,3", "compareId: 숫자 내림차순 오류");
             console.assert(["b","a","c"].sort((a,b)=>compareId(a,b)).join() === "a,b,c", "compareId: 문자 오름차순 오류");
+            // override 우선순위 검증
+            console.assert(getBlogName({ id: "__t", name: "base" }) === "base", "getBlogName: override 없을 때 원본 사용");
+            dbData.blog_name_overrides["__t"] = "수정";
+            console.assert(getBlogName({ id: "__t", name: "base" }) === "수정", "getBlogName: override 있을 때 우선");
+            delete dbData.blog_name_overrides["__t"];
+            console.assert(getPostTitle("__b", { id: "__p", title: "원제목" }) === "원제목", "getPostTitle: override 없을 때 원본 사용");
         })();
     </script>
 </body>
