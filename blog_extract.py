@@ -587,6 +587,9 @@ def run_all_in_one():
     scraped_posts = []
 
     if platform == 'naver':
+        failed_posts = []  # ponytail: 실패한 글만 모아서 한 번에 확인하려고 (디버그용)
+        # ponytail: 네이버는 에디터 버전별로 본문 마크업이 다름. 새 포맷 나오면 여기 한 줄만 추가하면 됨.
+        naver_content_selectors = ['.se-main-container', '#postViewArea', '.se_component_wrap.sect_dsc']
         for index, url in enumerate(all_extracted_urls):
             try:
                 log_no = url.split('/')[-1]
@@ -599,12 +602,23 @@ def run_all_in_one():
                 # HTML 특수문자 이스케이프 처리 방지 (JSON용 문자열)
                 title = title.replace('"', '\\"').replace('\n', '')
 
-                content_tag = soup.select_one('.se-main-container') or soup.select_one('#postViewArea')
+                content_tag = None
+                for sel in naver_content_selectors:
+                    content_tag = soup.select_one(sel)
+                    if content_tag:
+                        break
                 if content_tag:
                     for video in content_tag.select('[class*="video"], [class*="player"], iframe'): video.decompose()
                     for img in content_tag.find_all('img'):
                         real_src = img.get('data-lazy-src') or img.get('data-src') or img.get('src') or ''
                         if real_src: img['src'] = real_src
+                else:
+                    # ponytail: 후보 셀렉터 다 못 찾은 글 = 또 다른(아직 못 본) 포맷 → 원본을 따로 저장해 비교용으로 남김
+                    os.makedirs("debug_failed", exist_ok=True)
+                    with open(os.path.join("debug_failed", f"post_{log_no}.html"), 'w', encoding='utf-8') as df:
+                        df.write(res.text)
+                    failed_posts.append(f"post_{log_no}")
+                    print(f"    ⚠️ 본문 추출 실패 → debug_failed/post_{log_no}.html 저장")
 
                 content_html = str(content_tag) if content_tag else "<p>내용 없음</p>"
                 sub_html = f"<!DOCTYPE html><html lang='ko'><head><meta charset='UTF-8'><style>body {{ font-family: sans-serif; padding: 20px; }} img {{ max-width: 100%; height: auto; border-radius: 8px; margin: 10px 0; }}</style></head><body>{content_html}</body></html>"
@@ -615,6 +629,9 @@ def run_all_in_one():
                 print(f"  - [{index+1}/{len(all_extracted_urls)}] {title[:18]}...")
             except Exception as e:
                 pass
+
+        if failed_posts:
+            print(f"\n[알림] 본문 추출 실패 {len(failed_posts)}건 → debug_failed 폴더에 원본 저장됨")
 
     else:  # platform == 'tistory'
         # ⚠️ 티스토리는 스킨(테마)마다 본문을 감싸는 div 클래스가 달라서 여러 후보를 순서대로 시도합니다.
