@@ -5,7 +5,7 @@ window.blogsData = window.blogsData || [];
         "name": "eternity9us_2",
         "platform": "naver",
         "blogUrl": "https://blog.naver.com/eternity9us",
-        "categoryNo": "14", "16",
+        "categoryNo": "14, 16",
         "parentCategoryNo": "",
         "posts": []
     };
