@@ -283,16 +283,8 @@
             } catch (e) { console.error("Firebase 저장 오류", e); }
         }
 
-        let _statusTimer = null;
-        // 토스트: 메시지를 잠깐 띄움. persist=true면(주로 오류) 자동으로 사라지지 않음.
-        function setStatus(text, color, persist) {
-            const el = document.getElementById('sync-status');
-            el.innerText = text;
-            if (color) el.style.color = color;
-            el.classList.add('show');
-            clearTimeout(_statusTimer);
-            if (!persist) _statusTimer = setTimeout(() => el.classList.remove('show'), 2500);
-        }
+        // 동기화 상태 메시지(토스트) 비활성화 — 성공/진행/오류 어떤 메시지도 띄우지 않음
+        function setStatus() { /* no-op */ }
 
         function escapeHtml(str) {
             const div = document.createElement('div');
@@ -362,6 +354,13 @@
             const visible = getVisiblePosts(blogId);
             return visible.length > 0 && visible.every(p => isLearned(blogId, p.id));
         }
+        // 블로그의 학습 비율(0~1): 학습 체크한 글 수 / 보이는 전체 글 수
+        function blogLearnedRatio(blogId) {
+            const visible = getVisiblePosts(blogId);
+            if (visible.length === 0) return 0;
+            const learnedCount = visible.filter(p => isLearned(blogId, p.id)).length;
+            return learnedCount / visible.length;
+        }
 
         // 학습 체크 토글 → Firebase에 기록/해제
         async function toggleLearned() {
@@ -400,8 +399,16 @@
                 const nameAttrs = isEditMode
                     ? " contenteditable='true' onclick='event.stopPropagation()' onkeydown='nameKeydown(event)' onblur='saveBlogName(\"" + blog.id + "\", this)'"
                     : "";
+                // 학습 진척도: 학습한 비율만큼 오른쪽에서부터 파란색을 지움
+                //   bluePct = 왼쪽에 남는 파란색 비율(%). 학습 0% → 100%(전부 파랑), 학습 100% → 0%(전부 흰색)
+                const bluePct = (1 - blogLearnedRatio(blog.id)) * 100;
+                const fill = "rgba(59,130,246,.2)";
+                const bgStyle = "background:linear-gradient(to right,"
+                    + fill + " 0%," + fill + " " + bluePct + "%,"
+                    + "var(--card) " + bluePct + "%,var(--card) 100%);";
                 const li = document.createElement('li');
-                li.className = isBlogFullyLearned(blog.id) ? 'row' : 'row blog'; // 전부 학습 완료면 파란색 제거
+                li.className = isBlogFullyLearned(blog.id) ? 'row' : 'row blog'; // 전부 학습 완료면 파란 테두리 제거
+                li.setAttribute('style', bgStyle);
                 li.setAttribute('onclick', `onRowClick('blog','${blog.id}', this)`);
                 li.innerHTML =
                     "<input type='checkbox' class='delete-checkbox' value='" + blog.id + "' onclick='event.stopPropagation()'>" +
