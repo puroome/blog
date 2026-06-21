@@ -747,10 +747,84 @@
             // fetch 대기 중 사용자가 다른 글로 넘어갔으면 덮어쓰지 않음 (경합 방지)
             if (currentContentId !== contentId) return;
 
+            // 검색으로 들어온 글이면, 본문이 다 그려진 뒤 검색어를 강조하고 그 위치로 스크롤
+            const hlQuery = (readerInSearch && searchData && searchData.query) ? searchData.query : null;
+            frame.onload = function () {
+                frame.onload = null;
+                if (hlQuery && currentContentId === contentId) highlightInFrame(hlQuery);
+            };
+
             frame.removeAttribute('src');
             frame.srcdoc = processContentHtml(html);
         }
 
+        // 검색으로 들어온 글에서 검색어를 노란색으로 강조하고, 첫 번째 위치로 스크롤(ctrl+F 느낌)
+        function highlightInFrame(query) {
+            const frame = document.getElementById('content-frame');
+            let doc;
+            try { doc = frame.contentDocument || (frame.contentWindow && frame.contentWindow.document); }
+            catch (e) { return; }
+            if (!doc || !doc.body) return;
+
+            const q = (query || '').toLowerCase();
+            if (!q) return;
+
+            // 강조 스타일 1회 주입
+            if (!doc.getElementById('search-hit-style')) {
+                const st = doc.createElement('style');
+                st.id = 'search-hit-style';
+                st.textContent = "mark.search-hit{background:#ffe14d;color:inherit;border-radius:2px;}"
+                               + "mark.search-hit.current{background:#ff9a3d;}";
+                (doc.head || doc.body).appendChild(st);
+            }
+
+            // 검색어가 들어있는 텍스트 노드만 수집 (script/style/mark 내부는 제외)
+            const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT, {
+                acceptNode: function (node) {
+                    if (!node.nodeValue || node.nodeValue.toLowerCase().indexOf(q) === -1) return NodeFilter.FILTER_REJECT;
+                    const tag = node.parentNode && node.parentNode.nodeName;
+                    if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'MARK') return NodeFilter.FILTER_REJECT;
+                    return NodeFilter.FILTER_ACCEPT;
+                }
+            });
+            const targets = [];
+            let node;
+            while ((node = walker.nextNode())) targets.push(node);
+
+            let firstMark = null;
+            targets.forEach(function (textNode) {
+                const text = textNode.nodeValue;
+                const lower = text.toLowerCase();
+                let idx = lower.indexOf(q), last = 0;
+                if (idx === -1) return;
+                const frag = doc.createDocumentFragment();
+                while (idx !== -1) {
+                    if (idx > last) frag.appendChild(doc.createTextNode(text.slice(last, idx)));
+                    const mark = doc.createElement('mark');
+                    mark.className = 'search-hit';
+                    mark.textContent = text.slice(idx, idx + q.length); // 원문 대소문자 유지
+                    frag.appendChild(mark);
+                    if (!firstMark) firstMark = mark;
+                    last = idx + q.length;
+                    idx = lower.indexOf(q, last);
+                }
+                if (last < text.length) frag.appendChild(doc.createTextNode(text.slice(last)));
+                textNode.parentNode.replaceChild(frag, textNode);
+            });
+
+            if (firstMark) {
+                firstMark.classList.add('current');
+                const toView = function () {
+                    try { firstMark.scrollIntoView({ block: 'center' }); }
+                    catch (e) { firstMark.scrollIntoView(); }
+                };
+                toView();
+                setTimeout(toView, 250); // 이미지 등으로 레이아웃이 늦게 바뀌는 경우 위치 보정
+            }
+        }
+
+
+        
         function loadContent(blogId, postId) {
             const blog = window.blogsData.find(b => b.id === blogId);
             if (!blog) return;
