@@ -5,7 +5,7 @@ import re
 import os
 import json
 from bs4 import BeautifulSoup
-from urllib.parse import urlparse, parse_qs
+from urllib.parse import urlparse, parse_qs, unquote
 
 # ============================================================
 # ⚙️ 사용자 설정: 여기에 본인의 파이어베이스 주소를 적어주세요!
@@ -397,7 +397,7 @@ STATIC_INDEX_HTML = """<!DOCTYPE html>
 
 def run_all_in_one():
     print("=" * 60)
-    print(" 🚀 올인원 단어장 스크래퍼 (모듈화 구조 개선판)")
+    print(" 🚀 올인원 단어장 스크래퍼 (네이버 + 티스토리 지원)")
     print("=" * 60)
     
     # 필수 폴더 생성
@@ -416,82 +416,152 @@ def run_all_in_one():
         if filename.endswith(".js") and filename != "_id_list.js":
             existing_blog_ids.append(filename.replace(".js", ""))
 
-    # 3. URL 분석
-    full_url = input("\n수집할 카테고리의 전체 주소를 붙여넣어 주세요:\n입력: ").strip()
+    # 3. URL 분석 (호스트네임을 보고 네이버/티스토리 자동 감지)
+    full_url = input("\n수집할 카테고리(또는 블로그)의 전체 주소를 붙여넣어 주세요 (네이버 블로그 / 티스토리):\n입력: ").strip()
     parsed_url = urlparse(full_url)
     query_params = parse_qs(parsed_url.query)
-    
-    if 'blogId' not in query_params:
-        print("\n[오류] 주소에서 'blogId'를 찾을 수 없습니다.")
-        sys.exit()
-        
-    blog_id = query_params['blogId'][0]
-    category_no = query_params['categoryNo'][0] if 'categoryNo' in query_params else ""
-    parent_category_no = query_params['parentCategoryNo'][0] if 'parentCategoryNo' in query_params else ""
-    
-    headers = {"User-Agent": "Mozilla/5.0"}
-    
-    # 4. 목록 추출
-    print(f"\n[1단계] '{blog_id}' 블로그 데이터 탐색 중...")
-    page = 1
-    previous_log_nos = set()
-    all_extracted_urls = []
-    
-    while True:
-        target_url = f"https://blog.naver.com/PostList.naver?blogId={blog_id}&currentPage={page}"
-        if category_no: target_url += f"&categoryNo={category_no}"
-        if parent_category_no: target_url += f"&parentCategoryNo={parent_category_no}"
-        
-        response = requests.get(target_url, headers=headers)
-        response.raise_for_status()
-        
-        pattern = r'(?:/' + blog_id + r'/|post-view|logNo=)(\d{10,15})'
-        found_numbers = re.findall(pattern, response.text)
-        current_log_nos = set(found_numbers)
-        
-        if not current_log_nos or current_log_nos == previous_log_nos:
-            break
-            
-        base_post_url = f"https://blog.naver.com/{blog_id}"
-        for log_no in current_log_nos:
-            url = f"{base_post_url}/{log_no}"
-            if url not in all_extracted_urls:
-                all_extracted_urls.append(url)
-        
-        print(f"  - {page}페이지 완료 (누적: {len(all_extracted_urls)}개)")
-        previous_log_nos = current_log_nos
-        page += 1
-        time.sleep(0.5)
+    hostname = parsed_url.hostname or ""
 
-    if not all_extracted_urls:
-        print("\n[알림] 수집할 게시물이 없습니다.")
-        sys.exit()
+    platform = 'tistory' if 'tistory.com' in hostname else 'naver'
+    headers = {"User-Agent": "Mozilla/5.0"}
+
+    if platform == 'naver':
+        if 'blogId' not in query_params:
+            print("\n[오류] 주소에서 'blogId'를 찾을 수 없습니다.")
+            sys.exit()
+
+        blog_id = query_params['blogId'][0]
+        category_no = query_params['categoryNo'][0] if 'categoryNo' in query_params else ""
+        parent_category_no = query_params['parentCategoryNo'][0] if 'parentCategoryNo' in query_params else ""
+        blog_url_field = f"https://blog.naver.com/{blog_id}"
+
+        # 4. 목록 추출
+        print(f"\n[1단계] '{blog_id}' 블로그 데이터 탐색 중...")
+        page = 1
+        previous_log_nos = set()
+        all_extracted_urls = []
+        
+        while True:
+            target_url = f"https://blog.naver.com/PostList.naver?blogId={blog_id}&currentPage={page}"
+            if category_no: target_url += f"&categoryNo={category_no}"
+            if parent_category_no: target_url += f"&parentCategoryNo={parent_category_no}"
+            
+            response = requests.get(target_url, headers=headers)
+            response.raise_for_status()
+            
+            pattern = r'(?:/' + blog_id + r'/|post-view|logNo=)(\d{10,15})'
+            found_numbers = re.findall(pattern, response.text)
+            current_log_nos = set(found_numbers)
+            
+            if not current_log_nos or current_log_nos == previous_log_nos:
+                break
+                
+            base_post_url = f"https://blog.naver.com/{blog_id}"
+            for log_no in current_log_nos:
+                url = f"{base_post_url}/{log_no}"
+                if url not in all_extracted_urls:
+                    all_extracted_urls.append(url)
+            
+            print(f"  - {page}페이지 완료 (누적: {len(all_extracted_urls)}개)")
+            previous_log_nos = current_log_nos
+            page += 1
+            time.sleep(0.5)
+
+        if not all_extracted_urls:
+            print("\n[알림] 수집할 게시물이 없습니다.")
+            sys.exit()
+
+    else:  # platform == 'tistory'
+        blog_id = hostname.split('.')[0]  # 서브도메인을 블로그ID로 사용 (예: squiggles)
+        raw_path = parsed_url.path
+        if raw_path.startswith('/category/'):
+            category_no = unquote(raw_path[len('/category/'):]).strip('/')
+        else:
+            category_no = ""  # 카테고리 없이 통째로 넘기면 블로그 전체 글
+        parent_category_no = ""  # 티스토리는 상위 카테고리 개념을 쓰지 않음 (네이버 호환용 빈 값)
+        blog_url_field = f"https://{blog_id}.tistory.com"
+
+        # 4. 목록 추출 (티스토리는 카테고리 페이지를 page=1,2,3...으로 직접 순회)
+        print(f"\n[1단계] '{blog_id}' 티스토리 블로그 데이터 탐색 중...")
+        page = 1
+        previous_post_ids = set()
+        all_extracted_urls = []
+
+        # 기존 page= 파라미터가 있었다면 제거하고 새로 붙입니다.
+        base_url_no_page = re.sub(r'[?&]page=\d+', '', full_url)
+
+        while True:
+            sep = '&' if '?' in base_url_no_page else '?'
+            page_url = f"{base_url_no_page}{sep}page={page}"
+
+            response = requests.get(page_url, headers=headers)
+            response.raise_for_status()
+            page_soup = BeautifulSoup(response.text, 'html.parser')
+
+            # ⚠️ 목록 글만 모으고 "최근글/인기글/최근댓글" 같은 사이드바 위젯은 제외해야 합니다.
+            #    스킨마다 마크업이 달라 100% 보장은 어렵지만, 페이지네이션의 "다음" 링크나
+            #    "분류 전체보기"(카테고리 위젯) 링크가 나오는 지점을 경계로 그 이전 글만 채택합니다.
+            all_a_tags = page_soup.find_all('a', href=True)
+            cutoff = len(all_a_tags)
+            for i, a in enumerate(all_a_tags):
+                href = a['href']
+                text = a.get_text(strip=True)
+                if text == '다음' or re.match(r'^(?:https?://[^/]+)?/category/?$', href):
+                    cutoff = i
+                    break
+            relevant_tags = all_a_tags[:cutoff]
+
+            post_pattern = re.compile(r'^(?:https?://' + re.escape(blog_id) + r'\.tistory\.com)?/(\d+)/?$')
+            current_post_ids = set()
+            for a in relevant_tags:
+                m = post_pattern.match(a['href'])
+                if m:
+                    current_post_ids.add(m.group(1))
+
+            if not current_post_ids or current_post_ids == previous_post_ids:
+                break
+
+            for pid in current_post_ids:
+                url = f"https://{blog_id}.tistory.com/{pid}"
+                if url not in all_extracted_urls:
+                    all_extracted_urls.append(url)
+
+            print(f"  - {page}페이지 완료 (누적: {len(all_extracted_urls)}개)")
+            previous_post_ids = current_post_ids
+            page += 1
+            time.sleep(0.5)
+
+        if not all_extracted_urls:
+            print("\n[알림] 수집할 게시물이 없습니다.")
+            sys.exit()
 
     # 5. 고유 ID 부여 및 데이터 병합 결정
     final_blog_folder_id = None
-    target_blog_info = None
 
-    # 기존 id 폴더 내 파일들을 스캔하여 동일한 데이터가 있는지 확인
+    # 기존 id 폴더 내 파일들을 스캔하여 동일한 데이터가 있는지 확인 (platform + blogUrl + 카테고리로 매칭)
     for e_id in existing_blog_ids:
         js_path = os.path.join("id", f"{e_id}.js")
         if os.path.exists(js_path):
             with open(js_path, 'r', encoding='utf-8') as f:
                 content = f.read()
-                # 원본 블로그 ID, 카테고리 정보 추출
+                match_platform = re.search(r'"platform":\s*"([^"]*)"', content)
                 match_url = re.search(r'"blogUrl":\s*"([^"]+)"', content)
                 match_cat = re.search(r'"categoryNo":\s*"([^"]*)"', content)
                 match_pcat = re.search(r'"parentCategoryNo":\s*"([^"]*)"', content)
-                
+
+                # 구버전 파일(platform 필드 없음)은 네이버 전용이었으므로 기본값 naver로 간주
+                saved_platform = match_platform.group(1) if match_platform else "naver"
+
                 if match_url:
-                    saved_blog_id = match_url.group(1).split('/')[-1]
+                    saved_blog_url = match_url.group(1)
                     saved_cat = match_cat.group(1) if match_cat else ""
                     saved_pcat = match_pcat.group(1) if match_pcat else ""
-                    
-                    if saved_blog_id == blog_id:
-                        if saved_cat == category_no and saved_pcat == parent_category_no:
-                            final_blog_folder_id = e_id
-                            break
-                            
+
+                    if (saved_platform == platform and saved_blog_url == blog_url_field
+                            and saved_cat == category_no and saved_pcat == parent_category_no):
+                        final_blog_folder_id = e_id
+                        break
+
     if final_blog_folder_id:
         print(f"\n[알림] 기존 목록 '{final_blog_folder_id}'에 데이터를 업데이트 합니다.")
         display_name = final_blog_folder_id
@@ -515,34 +585,83 @@ def run_all_in_one():
     if not os.path.exists(blog_contents_folder): os.makedirs(blog_contents_folder)
 
     scraped_posts = []
-    for index, url in enumerate(all_extracted_urls):
-        try:
-            log_no = url.split('/')[-1]
-            real_url = f"https://blog.naver.com/PostView.naver?blogId={blog_id}&logNo={log_no}"
-            res = requests.get(real_url, headers=headers)
-            soup = BeautifulSoup(res.text, 'html.parser')
-            title_tag = soup.select_one('title')
-            title = (title_tag.get_text(strip=True) if title_tag else f"제목 없음").split(':')[0].strip()
-            
-            # HTML 특수문자 이스케이프 처리 방지 (JSON용 문자열)
-            title = title.replace('"', '\\"').replace('\n', '')
 
-            content_tag = soup.select_one('.se-main-container') or soup.select_one('#postViewArea')
-            if content_tag:
-                for video in content_tag.select('[class*="video"], [class*="player"], iframe'): video.decompose()
-                for img in content_tag.find_all('img'):
-                    real_src = img.get('data-lazy-src') or img.get('data-src') or img.get('src') or ''
-                    if real_src: img['src'] = real_src
+    if platform == 'naver':
+        for index, url in enumerate(all_extracted_urls):
+            try:
+                log_no = url.split('/')[-1]
+                real_url = f"https://blog.naver.com/PostView.naver?blogId={blog_id}&logNo={log_no}"
+                res = requests.get(real_url, headers=headers)
+                soup = BeautifulSoup(res.text, 'html.parser')
+                title_tag = soup.select_one('title')
+                title = (title_tag.get_text(strip=True) if title_tag else f"제목 없음").split(':')[0].strip()
+                
+                # HTML 특수문자 이스케이프 처리 방지 (JSON용 문자열)
+                title = title.replace('"', '\\"').replace('\n', '')
 
-            content_html = str(content_tag) if content_tag else "<p>내용 없음</p>"
-            sub_html = f"<!DOCTYPE html><html lang='ko'><head><meta charset='UTF-8'><style>body {{ font-family: sans-serif; padding: 20px; }} img {{ max-width: 100%; height: auto; border-radius: 8px; margin: 10px 0; }}</style></head><body>{content_html}</body></html>"
+                content_tag = soup.select_one('.se-main-container') or soup.select_one('#postViewArea')
+                if content_tag:
+                    for video in content_tag.select('[class*="video"], [class*="player"], iframe'): video.decompose()
+                    for img in content_tag.find_all('img'):
+                        real_src = img.get('data-lazy-src') or img.get('data-src') or img.get('src') or ''
+                        if real_src: img['src'] = real_src
 
-            post_id = f"post_{log_no}"
-            with open(os.path.join(blog_contents_folder, f"{post_id}.html"), 'w', encoding='utf-8') as sf: sf.write(sub_html)
-            scraped_posts.append({"id": post_id, "title": title, "link": url})
-            print(f"  - [{index+1}/{len(all_extracted_urls)}] {title[:18]}...")
-        except Exception as e:
-            pass
+                content_html = str(content_tag) if content_tag else "<p>내용 없음</p>"
+                sub_html = f"<!DOCTYPE html><html lang='ko'><head><meta charset='UTF-8'><style>body {{ font-family: sans-serif; padding: 20px; }} img {{ max-width: 100%; height: auto; border-radius: 8px; margin: 10px 0; }}</style></head><body>{content_html}</body></html>"
+
+                post_id = f"post_{log_no}"
+                with open(os.path.join(blog_contents_folder, f"{post_id}.html"), 'w', encoding='utf-8') as sf: sf.write(sub_html)
+                scraped_posts.append({"id": post_id, "title": title, "link": url})
+                print(f"  - [{index+1}/{len(all_extracted_urls)}] {title[:18]}...")
+            except Exception as e:
+                pass
+
+    else:  # platform == 'tistory'
+        # ⚠️ 티스토리는 스킨(테마)마다 본문을 감싸는 div 클래스가 달라서 여러 후보를 순서대로 시도합니다.
+        #    아래 후보에 없는 스킨이면 본문이 비거나 깨질 수 있으니, 그 경우 선택자를 추가해야 합니다.
+        tistory_content_selectors = [
+            '.tt_article_useless_p_margin',
+            '.article_view',
+            '.entry-content',
+            '#content .area_view',
+            'article .contents_style',
+        ]
+        for index, url in enumerate(all_extracted_urls):
+            try:
+                res = requests.get(url, headers=headers)
+                soup = BeautifulSoup(res.text, 'html.parser')
+
+                og_title = soup.select_one('meta[property="og:title"]')
+                if og_title and og_title.get('content'):
+                    title = og_title['content'].strip()
+                else:
+                    title_tag = soup.select_one('title')
+                    title = title_tag.get_text(strip=True) if title_tag else "제목 없음"
+                title = title.replace('"', '\\"').replace('\n', '')
+
+                content_tag = None
+                for sel in tistory_content_selectors:
+                    found = soup.select_one(sel)
+                    if found:
+                        content_tag = found
+                        break
+
+                if content_tag:
+                    for junk in content_tag.select('script, ins, iframe, [class*="share"], [class*="comment"]'):
+                        junk.decompose()
+                    for img in content_tag.find_all('img'):
+                        real_src = img.get('data-original') or img.get('data-src') or img.get('src') or ''
+                        if real_src: img['src'] = real_src
+
+                content_html = str(content_tag) if content_tag else "<p>내용 없음</p>"
+                sub_html = f"<!DOCTYPE html><html lang='ko'><head><meta charset='UTF-8'><style>body {{ font-family: sans-serif; padding: 20px; }} img {{ max-width: 100%; height: auto; border-radius: 8px; margin: 10px 0; }}</style></head><body>{content_html}</body></html>"
+
+                post_id = f"post_{url.split('/')[-1]}"
+                with open(os.path.join(blog_contents_folder, f"{post_id}.html"), 'w', encoding='utf-8') as sf: sf.write(sub_html)
+                scraped_posts.append({"id": post_id, "title": title, "link": url})
+                print(f"  - [{index+1}/{len(all_extracted_urls)}] {title[:18]}...")
+            except Exception as e:
+                pass
 
     # 7. 개별 JS 파일 (id/[ID].js) 생성 및 업데이트 (한 줄 포맷팅)
     print("\n[3단계] 개별 데이터 파일 병합 중...")
@@ -576,7 +695,8 @@ def run_all_in_one():
     let blog = {{
         "id": "{final_blog_folder_id}",
         "name": "{display_name}",
-        "blogUrl": "https://blog.naver.com/{blog_id}",
+        "platform": "{platform}",
+        "blogUrl": "{blog_url_field}",
         "categoryNo": "{category_no}",
         "parentCategoryNo": "{parent_category_no}",
         "posts": []
