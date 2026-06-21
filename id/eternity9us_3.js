@@ -1,8 +1,8 @@
 window.blogsData = window.blogsData || [];
 (function() {
     let blog = {
-        "id": "eternity9us_6",
-        "name": "eternity9us_6",
+        "id": "eternity9us_3",
+        "name": "eternity9us_3",
         "platform": "naver",
         "blogUrl": "https://blog.naver.com/eternity9us",
         "categoryNo": "32",
