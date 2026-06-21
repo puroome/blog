@@ -1,1 +1,1 @@
-const activeBlogIds = ["design2kr", "vocarevo", "vocarevo_1", "design2kr_1", "leedovoca", "syette828", "yjk5863", "zealot01", "zeustour", "kangreading", "kangreading_1", "ersdf036", "ersdf036_1"];
+const activeBlogIds = ["design2kr ", "design2kr_1", "ersdf036", "ersdf036_1", "kangreading", "kangreading_1", "leedovoca", "squiggles", "syette828", "vocarevo", "vocarevo_1", "yjk5863", "zealot01", "zeustour"];
