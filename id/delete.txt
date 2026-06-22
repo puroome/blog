@@ -82,6 +82,9 @@ eternity9us_3
     blog.posts.push({"id": "post_223451841752", "title": "교재(문법, 단어) 통합 안내입니다", "link": "https://blog.naver.com/eternity9us/223451841752"});
     blog.posts.push({"id": "post_221491868366", "title": "영어단어설명에 대해서...[필독]", "link": "https://blog.naver.com/eternity9us/221491868366"});
 
+vocarevo_1
+    blog.posts.push({"id": "post_220700142232", "title": "영어 질문 게시판", "link": "https://blog.naver.com/vocarevo/220700142232"});
+
 
 zeustour
     blog.posts.push({"id": "post_222609223291", "title": "Goodbye 2021 & Welcome 2022 !", "link": "https://blog.naver.com/zeustour/222609223291"});
