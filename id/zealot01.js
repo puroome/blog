@@ -2,20 +2,17 @@ window.blogsData = window.blogsData || [];
 (function() {
     let blog = {
         "id": "zealot01",
-        "name": "zealot01",
+        "name": "[영상] zealot01",
         "platform": "naver",
         "blogUrl": "https://blog.naver.com/zealot01",
         "categoryNo": "82",
         "parentCategoryNo": "",
         "posts": []
     };
-    blog.posts.push({"id": "post_221265378425", "title": "네이버 스마트 스토어 오픈 및 \"천리안의 7 ENGLISH\" 판매", "link": "https://blog.naver.com/zealot01/221265378425"});
     blog.posts.push({"id": "post_223785811373", "title": "[회사영어 제인] Wind up-3가지 뜻 다 알고 있다면! - 2025.3.5.", "link": "https://blog.naver.com/zealot01/223785811373"});
-    blog.posts.push({"id": "post_221545130247", "title": "천리안의 7 ENGLISH 판매", "link": "https://blog.naver.com/zealot01/221545130247"});
     blog.posts.push({"id": "post_223785722176", "title": "[VOA 매일 영어 플러스] 매우 희박한 가능성 - 2025.3.6.", "link": "https://blog.naver.com/zealot01/223785722176"});
     blog.posts.push({"id": "post_223781823536", "title": "[VOA 매일 영어 플러스] 두 마리 토끼를 다 잡을 수는 없다. - 2025.3.3.", "link": "https://blog.naver.com/zealot01/223781823536"});
     blog.posts.push({"id": "post_223767356792", "title": "[VOA 매일 영어 플러스] 갑작스러운 방향 전환 - 2025.2.20.", "link": "https://blog.naver.com/zealot01/223767356792"});
-    blog.posts.push({"id": "post_223766905299", "title": "헌재 9차 변론 - 민노총 언론사의 가짜 뉴스, 북한 지령 및 간첩 행위, 홍장원의 거짓 진술 증명 - 2025.2.18.", "link": "https://blog.naver.com/zealot01/223766905299"});
     blog.posts.push({"id": "post_223763431561", "title": "[VOA 매일 영어 플러스] 판박이 - 2025.2.17.", "link": "https://blog.naver.com/zealot01/223763431561"});
     blog.posts.push({"id": "post_223759361838", "title": "[VOA 매일 영어 플러스] 실천하지 못할 거면 말만 번지르르하게 하지 마세요. - 2025.2.13.", "link": "https://blog.naver.com/zealot01/223759361838"});
     blog.posts.push({"id": "post_223755203454", "title": "[VOA 매일 영어 플러스] 만반의 준비를 갖추세요. - 2025.2.10.", "link": "https://blog.naver.com/zealot01/223755203454"});
@@ -25,10 +22,8 @@ window.blogsData = window.blogsData || [];
     blog.posts.push({"id": "post_223714250234", "title": "[VOA 매일 영어 플러스] 밑져야 본전 - 2025.1.2.", "link": "https://blog.naver.com/zealot01/223714250234"});
     blog.posts.push({"id": "post_223709249633", "title": "[VOA 매일 영어 플러스] 당신이 힘든 일은 모두 다 했습니다. - 2024.12.30.", "link": "https://blog.naver.com/zealot01/223709249633"});
     blog.posts.push({"id": "post_223376143651", "title": "[회사영어 제인] 여행 전 꼭 보고 가세요! - 2024.3.7.", "link": "https://blog.naver.com/zealot01/223376143651"});
-    blog.posts.push({"id": "post_223375161482", "title": "[트랭디] 딱 15분🔥 영어 입+귀뚫기 | 무한반복 흘려듣기? 아무 의미 없어요 - 2024.2.20.", "link": "https://blog.naver.com/zealot01/223375161482"});
     blog.posts.push({"id": "post_223361774425", "title": "[Ariannita la Gringa] 집안일을 영어로 - 2024.1.10.", "link": "https://blog.naver.com/zealot01/223361774425"});
     blog.posts.push({"id": "post_223172579691", "title": "[폼나는 영어] '제가 연락할게요.'를 I'll contact you. 이렇게만 표현하셨나요? 더 자연스럽고 원어민스러운 이 두 표현을 사용해 보세요. - 2023.8.2.", "link": "https://blog.naver.com/zealot01/223172579691"});
-    blog.posts.push({"id": "post_223163996163", "title": "[English with Emma] How to use ChatGPT to learn a language - 2023.7.22.", "link": "https://blog.naver.com/zealot01/223163996163"});
     blog.posts.push({"id": "post_223149327875", "title": "[폼나는 영어] 원어민이 매일 사용하는 핵심 구동사 figure out, work out. - 2023.7.4.", "link": "https://blog.naver.com/zealot01/223149327875"});
     blog.posts.push({"id": "post_223118243664", "title": "[폼나는 영어] 원어민이 자주 쓰기 때문에 꼭 알아야 하는 영어 표현 I got held up - 2023.5.31", "link": "https://blog.naver.com/zealot01/223118243664"});
     blog.posts.push({"id": "post_222868496237", "title": "[권아나TV] [추석때 으른들의 입을 봉인하는 방법] 영어회화 | 원어민표현 - 2022.9.6.", "link": "https://blog.naver.com/zealot01/222868496237"});
@@ -110,7 +105,6 @@ window.blogsData = window.blogsData || [];
     blog.posts.push({"id": "post_221878656902", "title": "[VOA Learning English] VOA60", "link": "https://blog.naver.com/zealot01/221878656902"});
     blog.posts.push({"id": "post_221832977495", "title": "[시소] 겨울왕국2 OST - Show Yourself - Idina Menzel(이디나 멘젤)", "link": "https://blog.naver.com/zealot01/221832977495"});
     blog.posts.push({"id": "post_221803899281", "title": "[PragerU] Dating", "link": "https://blog.naver.com/zealot01/221803899281"});
-    blog.posts.push({"id": "post_221802591313", "title": "[프리덤 파이터 TV] 트럼프 대통령, 2020년 신년 국정연설 (2020.2.4.) - 자막", "link": "https://blog.naver.com/zealot01/221802591313"});
     blog.posts.push({"id": "post_221796504105", "title": "[PragerU] We Need to Talk About Public Pension Liabilities", "link": "https://blog.naver.com/zealot01/221796504105"});
     blog.posts.push({"id": "post_221768813743", "title": "[PragerU] 계몽주의의 진실", "link": "https://blog.naver.com/zealot01/221768813743"});
     blog.posts.push({"id": "post_221730089435", "title": "[Easy English] Some, Every, Any, No & Compounds", "link": "https://blog.naver.com/zealot01/221730089435"});
@@ -258,7 +252,6 @@ window.blogsData = window.blogsData || [];
     blog.posts.push({"id": "post_221446040312", "title": "[Facts in Motion] Why dead Whales are so dangerous", "link": "https://blog.naver.com/zealot01/221446040312"});
     blog.posts.push({"id": "post_221445911112", "title": "[My Pingu Tv] The Golden Plate Story", "link": "https://blog.naver.com/zealot01/221445911112"});
     blog.posts.push({"id": "post_221443994889", "title": "[TED-Ed] 왜 기름은 물에 녹지 않을까요? - 죤 폴라드 (John Pollard)", "link": "https://blog.naver.com/zealot01/221443994889"});
-    blog.posts.push({"id": "post_221442182748", "title": "[My Pingu Tv] The Intelligent Fisherman Story - 초급", "link": "https://blog.naver.com/zealot01/221442182748"});
     blog.posts.push({"id": "post_221440738401", "title": "[TED-Ed] 성공한 사람들의 8가지 특징 - 리차드 세인트 존 (Richard St. John)", "link": "https://blog.naver.com/zealot01/221440738401"});
     blog.posts.push({"id": "post_221440128501", "title": "[TED-Ed] 유리는 왜 투명한가? - 마크 미오도우니크 (Mark Miodownik)", "link": "https://blog.naver.com/zealot01/221440128501"});
     blog.posts.push({"id": "post_221439278018", "title": "[TED-Ed] Can you survive nuclear fallout? - Brooke Buddemeier and Jessica S. Wieder", "link": "https://blog.naver.com/zealot01/221439278018"});
@@ -268,7 +261,6 @@ window.blogsData = window.blogsData || [];
     blog.posts.push({"id": "post_221436552289", "title": "[TED-Ed] 지폐에 가치를 주는 것은 무엇일까? - Doug Levinson", "link": "https://blog.naver.com/zealot01/221436552289"});
     blog.posts.push({"id": "post_221435629185", "title": "[TED-Ed] 왜 미터법이 중요할까요? |맷 앤티콜 (Matt Anticole)", "link": "https://blog.naver.com/zealot01/221435629185"});
     blog.posts.push({"id": "post_221435281232", "title": "[PragerU] 암흑시대는 얼마나 어두웠던걸까?", "link": "https://blog.naver.com/zealot01/221435281232"});
-    blog.posts.push({"id": "post_221434874954", "title": "[My Pingu Tv] The Ruby Prince Story In English", "link": "https://blog.naver.com/zealot01/221434874954"});
     blog.posts.push({"id": "post_221433734733", "title": "[TED-Ed] 제노의 이분법적 역설이란 무엇일까? - 콜름 켈러허(Colm Kelleher)", "link": "https://blog.naver.com/zealot01/221433734733"});
     blog.posts.push({"id": "post_221433351720", "title": "[TED-Ed] Why don't perpetual motion machines ever work? - Netta Schramm [한국어자막 있음]", "link": "https://blog.naver.com/zealot01/221433351720"});
     blog.posts.push({"id": "post_221432958199", "title": "[TED-Ed] Where does gold come from? - David Lunney", "link": "https://blog.naver.com/zealot01/221432958199"});
@@ -383,7 +375,6 @@ window.blogsData = window.blogsData || [];
     blog.posts.push({"id": "post_221272932619", "title": "[FOX News] Donald Trump and Kim Jong Un’s meeting", "link": "https://blog.naver.com/zealot01/221272932619"});
     blog.posts.push({"id": "post_221272918733", "title": "[FOX News] Israel conducts largest strike in Syria since Yom Kippur War - 이스라엘, 시리아 공습", "link": "https://blog.naver.com/zealot01/221272918733"});
     blog.posts.push({"id": "post_221271255092", "title": "[FOX News] Trump withdraws US from Iran nuclear deal - 트럼프, \"이란핵협정\" 탈퇴 발표", "link": "https://blog.naver.com/zealot01/221271255092"});
-    blog.posts.push({"id": "post_221268752648", "title": "[글로벌디펜스뉴스] 이스라엘 모사드가 이란 창고 급습해서 가져온 핵자료에서 북한 관련 내용은 얼마나 있나?", "link": "https://blog.naver.com/zealot01/221268752648"});
     blog.posts.push({"id": "post_221267155680", "title": "[TED] How language shapes the way we think | Lera Boroditsky", "link": "https://blog.naver.com/zealot01/221267155680"});
     blog.posts.push({"id": "post_221263621953", "title": "[The List] Things In Frozen Only Adults Will Notice", "link": "https://blog.naver.com/zealot01/221263621953"});
     blog.posts.push({"id": "post_221263615955", "title": "[The List] Ariana Grande Didn't Always Look Like This", "link": "https://blog.naver.com/zealot01/221263615955"});
