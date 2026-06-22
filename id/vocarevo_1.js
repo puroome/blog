@@ -2,13 +2,12 @@ window.blogsData = window.blogsData || [];
 (function() {
     let blog = {
         "id": "vocarevo_1",
-        "name": "vocarevo_1",
+        "name": "[어법] vocarevo_1",
         "blogUrl": "https://blog.naver.com/vocarevo",
         "categoryNo": "18",
         "parentCategoryNo": "",
         "posts": []
     };
-    blog.posts.push({"id": "post_220700142232", "title": "영어 질문 게시판", "link": "https://blog.naver.com/vocarevo/220700142232"});
     blog.posts.push({"id": "post_220764485156", "title": "전치사 for의 모든 뜻 한 방에 외우기", "link": "https://blog.naver.com/vocarevo/220764485156"});
     blog.posts.push({"id": "post_220701804591", "title": "영작앱(단어만 바꿀 줄 알면 끝나는 영작문)", "link": "https://blog.naver.com/vocarevo/220701804591"});
     blog.posts.push({"id": "post_220757925536", "title": "분사구문 해석하기(초간단 비법)", "link": "https://blog.naver.com/vocarevo/220757925536"});
