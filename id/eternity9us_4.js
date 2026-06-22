@@ -2,7 +2,7 @@ window.blogsData = window.blogsData || [];
 (function() {
     let blog = {
         "id": "eternity9us_4",
-        "name": "eternity9us_4",
+        "name": "[어법] eternity9us_4",
         "platform": "naver",
         "blogUrl": "https://blog.naver.com/eternity9us",
         "categoryNo": "43, 45",
