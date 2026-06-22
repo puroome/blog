@@ -93,3 +93,13 @@ zeustour
     blog.posts.push({"id": "post_220226120896", "title": "Happy New Year !!", "link": "https://blog.naver.com/zeustour/220226120896"});
 
 
+zealot01
+    blog.posts.push({"id": "post_221265378425", "title": "네이버 스마트 스토어 오픈 및 \"천리안의 7 ENGLISH\" 판매", "link": "https://blog.naver.com/zealot01/221265378425"});
+    blog.posts.push({"id": "post_221545130247", "title": "천리안의 7 ENGLISH 판매", "link": "https://blog.naver.com/zealot01/221545130247"});
+    blog.posts.push({"id": "post_223766905299", "title": "헌재 9차 변론 - 민노총 언론사의 가짜 뉴스, 북한 지령 및 간첩 행위, 홍장원의 거짓 진술 증명 - 2025.2.18.", "link": "https://blog.naver.com/zealot01/223766905299"});
+    blog.posts.push({"id": "post_223375161482", "title": "[트랭디] 딱 15분🔥 영어 입+귀뚫기 | 무한반복 흘려듣기? 아무 의미 없어요 - 2024.2.20.", "link": "https://blog.naver.com/zealot01/223375161482"});
+    blog.posts.push({"id": "post_223163996163", "title": "[English with Emma] How to use ChatGPT to learn a language - 2023.7.22.", "link": "https://blog.naver.com/zealot01/223163996163"});
+    blog.posts.push({"id": "post_221802591313", "title": "[프리덤 파이터 TV] 트럼프 대통령, 2020년 신년 국정연설 (2020.2.4.) - 자막", "link": "https://blog.naver.com/zealot01/221802591313"});
+    blog.posts.push({"id": "post_221442182748", "title": "[My Pingu Tv] The Intelligent Fisherman Story - 초급", "link": "https://blog.naver.com/zealot01/221442182748"});
+    blog.posts.push({"id": "post_221434874954", "title": "[My Pingu Tv] The Ruby Prince Story In English", "link": "https://blog.naver.com/zealot01/221434874954"});
+    blog.posts.push({"id": "post_221268752648", "title": "[글로벌디펜스뉴스] 이스라엘 모사드가 이란 창고 급습해서 가져온 핵자료에서 북한 관련 내용은 얼마나 있나?", "link": "https://blog.naver.com/zealot01/221268752648"});
