@@ -2,7 +2,7 @@ window.blogsData = window.blogsData || [];
 (function() {
     let blog = {
         "id": "kangreading",
-        "name": "kangreading",
+        "name": "[어법] kangreading",
         "blogUrl": "https://blog.naver.com/kangreading",
         "categoryNo": "89",
         "parentCategoryNo": "",
