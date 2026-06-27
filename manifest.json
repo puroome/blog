@@ -1,11 +1,11 @@
 {
-  "name": "정기시험 성적분석",
-  "short_name": "test-log",
-  "description": "정기시험 성적분석",
+  "name": "Blog 게시물",
+  "short_name": "Blog",
+  "description": "Blog 영어 게시물",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "##2563eb",
+  "theme_color": "##3b82f6",
   "icons": [
     {
       "src": "./icon-192.png",
