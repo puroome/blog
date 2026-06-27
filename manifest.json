@@ -1,5 +1,5 @@
 {
-  "name": "Blog",
+  "name": "Blog 게시글",
   "short_name": "Blog",
   "description": "Blog 영어 게시물",
   "start_url": "./index.html",
